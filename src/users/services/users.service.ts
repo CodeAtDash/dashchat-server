@@ -129,4 +129,8 @@ export class UsersService {
       limit,
     };
   }
+
+  async findAll(payload: any) {
+    return this.userModel.findAll(payload);
+  }
 }
