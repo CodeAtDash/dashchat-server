@@ -8,8 +8,13 @@ import {
   omitBy,
   isUndefined,
 } from 'lodash';
+import * as bcrypt from 'bcrypt';
 import { AxiosError } from 'axios';
 import { CustomError, PaginationFilters } from './types';
+import { applicationConfig } from 'config';
+import { customAlphabet } from 'nanoid';
+import { JwtService } from '@nestjs/jwt';
+import { OTP_LENGTH } from './constants';
 
 export const isNilOrEmpty = (value: any) =>
   isNil(value) ||
@@ -135,4 +140,43 @@ export const handleAxiosError = (error: AxiosError) => {
   }
 
   throw new CustomError(message, code, errorMessage);
+};
+
+export const generateOtpAndVerificationToken = (
+  payload: {
+    [key: string]: string;
+  },
+  jwtService: JwtService,
+) => {
+  const otp = customAlphabet('0123456789', OTP_LENGTH)();
+  const verificationToken = jwtService.sign(payload, {
+    secret: applicationConfig.jwt.secret,
+    algorithm: applicationConfig.jwt.algorithm,
+    issuer: applicationConfig.jwt.issuer,
+    expiresIn: applicationConfig.jwt.emailTokenExpiresIn,
+  });
+
+  return { otp, verificationToken };
+};
+
+export const generateJwt = async (
+  payload: { id: string; username: string },
+  jwtService: JwtService,
+) => {
+  const jwtPayload = { sub: payload.id, username: payload.username };
+
+  return {
+    accessToken: await jwtService.signAsync(jwtPayload),
+    expiresIn: applicationConfig.jwt.expiresIn,
+  };
+};
+
+export const hashPassword = (password: string) => {
+  const saltOrRounds = 10;
+
+  return bcrypt.hash(password, saltOrRounds);
+};
+
+export const comparePassword = (password: string, hash: string) => {
+  return bcrypt.compare(password, hash);
 };

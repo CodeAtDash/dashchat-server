@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../entities/user.entity';
 import { removeUndefinedKeys } from 'src/utils/helpers';
 import { InvalidUser } from 'src/utils/exceptions';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUser } from '../types/create-user';
 
 @Injectable()
 export class UsersService {
@@ -15,30 +15,43 @@ export class UsersService {
   async findOne({
     id,
     email,
+    username,
     isVerified,
   }: {
     id?: string;
     email?: string;
+    username?: string;
     isVerified?: boolean;
   }) {
     return this.userModel.findOne({
       where: removeUndefinedKeys({
         id,
         email,
+        username,
         isVerified,
       }),
     });
   }
 
-  async create({ name, email, password }: CreateUserDto) {
+  async create({
+    name,
+    email,
+    username,
+    password,
+    otp,
+    verificationToken,
+  }: CreateUser) {
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(password, saltOrRounds);
 
     return this.userModel.create({
       name,
       email,
+      username,
       password: hash,
       isVerified: false,
+      otp,
+      verificationToken,
     });
   }
 
@@ -53,6 +66,7 @@ export class UsersService {
     filters: {
       id?: string;
       email?: string;
+      username?: string;
       otp?: string;
       verificationToken?: string;
       isVerified?: boolean;
@@ -61,9 +75,12 @@ export class UsersService {
     return this.userModel.update(payload, { where: filters });
   }
 
-  async remove(id: string) {
+  async remove({ email, username }: { email?: string; username?: string }) {
     return this.userModel.destroy({
-      where: { id },
+      where: removeUndefinedKeys({
+        email,
+        username,
+      }),
     });
   }
 

@@ -4,14 +4,14 @@ import { Algorithm } from 'jsonwebtoken';
 
 export const applicationConfig = {
   app: {
-    port: process.env.PORT || 8808,
+    port: process.env.PORT || 5500,
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'gradeviser-server-secret',
+    secret: process.env.JWT_SECRET || 'chat-app-backend-secret',
     expiresIn: '24h',
     algorithm: 'HS256' as Algorithm,
-    issuer: 'gradeviser-server',
+    issuer: 'chat-app-backend',
     emailTokenExpiresIn: '5m',
   },
 
@@ -20,7 +20,7 @@ export const applicationConfig = {
     host: process.env.DB_HOST || 'localhost',
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_NAME || 'gradeviser-server',
+    database: process.env.DB_NAME || 'chat-app-backend',
     port: process.env.DB_PORT || '5432',
   },
 

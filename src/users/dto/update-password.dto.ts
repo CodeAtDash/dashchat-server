@@ -5,18 +5,23 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import {
+  OTP_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from 'src/utils/constants';
 
 export class UpdatePasswordDto {
   @IsJWT()
   verificationToken: string;
 
   @IsString()
-  @MaxLength(6)
-  @MinLength(6)
+  @MaxLength(OTP_LENGTH)
+  @MinLength(OTP_LENGTH)
   otp: string;
 
-  @MinLength(8)
-  @MaxLength(30)
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
   @IsNotEmpty()
   password: string;
 }

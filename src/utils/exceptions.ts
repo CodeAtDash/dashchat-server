@@ -93,6 +93,16 @@ export class WrongPassword extends CustomException {
   }
 }
 
+export class DuplicateUsername extends CustomException {
+  constructor() {
+    super(
+      'Username already belongs to someone else',
+      'DuplicateUsername',
+      HttpStatus.NOT_ACCEPTABLE,
+    );
+  }
+}
+
 export class EmailAlreadyVerified extends CustomException {
   constructor() {
     super(

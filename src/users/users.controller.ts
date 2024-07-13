@@ -2,19 +2,18 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Patch,
   Post,
+  Put,
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { customAlphabet } from 'nanoid';
 import { UsersService } from './services/users.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from './entities/user.entity';
-import { StartEmailVerificationDto } from './dto/start-email-verification.dto';
 import {
-  EmailAlreadyVerified,
-  EmailBelongsToSomeoneElse,
   EmailEnteredNotExist,
   InvalidOtp,
   PleaseEnterDifferentPassword,
@@ -23,14 +22,17 @@ import {
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { applicationConfig } from 'config';
-import { FinishEmailVerificationDto } from './dto/finish-email-verification.dto';
-import { isNilOrEmpty, isPresent } from 'src/utils/helpers';
+import {
+  generateOtpAndVerificationToken,
+  isNilOrEmpty,
+  isPresent,
+} from 'src/utils/helpers';
 import { MailService } from 'src/mail/services/mail.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { Public } from 'src/utils/decorators/public';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { RegistrationFinalizeDto } from 'src/auth/dto/register.dto';
 
 @Controller('user')
 export class UsersController {
@@ -48,88 +50,30 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Patch()
-  async updateUser(
-    @CurrentUser() currentUser: User,
-    @Body() body: UpdateUserDto,
-  ) {
+  async updateUser(@CurrentUser() currentUser: User, @Body() body: any) {
     return this.usersService.update(
       { name: body.name },
       { id: currentUser.id },
     );
   }
 
-  @UseGuards(AuthGuard)
-  @Post('start-email-verification')
-  async startEmailVerification(
-    @CurrentUser() currentUser: User,
-    @Body() body: StartEmailVerificationDto,
-  ) {
-    const user = await this.usersService.findOne({
-      email: body.email,
-      isVerified: true,
-    });
-
-    if (user) {
-      if (user.id === currentUser.id) {
-        throw new EmailAlreadyVerified();
-      } else {
-        throw new EmailBelongsToSomeoneElse();
-      }
-    }
-
-    const otp = customAlphabet('0123456789', 6)();
-    const emailVerificationJwtToken = this.jwtService.sign(
-      {
-        email: body.email,
-        userId: currentUser.id,
-      },
-      {
-        secret: applicationConfig.jwt.secret,
-        algorithm: applicationConfig.jwt.algorithm,
-        issuer: applicationConfig.jwt.issuer,
-        expiresIn: applicationConfig.jwt.emailTokenExpiresIn,
-      },
-    );
-
-    await this.usersService.update(
-      {
-        otp,
-        verificationToken: emailVerificationJwtToken,
-      },
-      { id: currentUser.id, email: body.email, isVerified: false },
-    );
-
-    await this.mailService.sendVerificationEmail(otp, body.email);
-
-    return { verificationToken: emailVerificationJwtToken };
-  }
-
-  @UseGuards(AuthGuard)
-  @Post('finish-email-verification')
-  async finishEmailVerification(
-    @CurrentUser() currentUser: User,
-    @Body() body: FinishEmailVerificationDto,
-  ) {
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Put('register')
+  async registrationFinalize(@Body() body: RegistrationFinalizeDto) {
     const payload = this.jwtService.verify(body.verificationToken, {
       secret: applicationConfig.jwt.secret,
     });
 
-    if (!(isPresent(payload.email) && payload.userId === currentUser.id)) {
+    if (!(isPresent(payload.email) && isPresent(payload.username))) {
       throw new Unauthorized();
     }
 
     const user = await this.usersService.findOne({
       email: payload.email,
+      username: payload.username,
       isVerified: true,
     });
-
-    if (user) {
-      if (user.id === currentUser.id) {
-        throw new EmailAlreadyVerified();
-      } else {
-        throw new EmailBelongsToSomeoneElse();
-      }
-    }
 
     const [affectedCount] = await this.usersService.update(
       {
@@ -138,8 +82,8 @@ export class UsersController {
         isVerified: true,
       },
       {
-        id: currentUser.id,
         email: payload.email,
+        username: payload.username,
         otp: body.otp,
         verificationToken: body.verificationToken,
         isVerified: false,
@@ -165,31 +109,25 @@ export class UsersController {
       throw new EmailEnteredNotExist();
     }
 
-    const otp = customAlphabet('0123456789', 6)();
-    const passwordResetVerificationToken = this.jwtService.sign(
+    const { otp, verificationToken } = generateOtpAndVerificationToken(
       {
-        email: user!.email,
+        email: body.email,
       },
-      {
-        secret: applicationConfig.jwt.secret,
-        algorithm: applicationConfig.jwt.algorithm,
-        issuer: applicationConfig.jwt.issuer,
-        expiresIn: applicationConfig.jwt.emailTokenExpiresIn,
-      },
+      this.jwtService,
     );
 
     await Promise.all([
       this.usersService.update(
         {
           otp,
-          verificationToken: passwordResetVerificationToken,
+          verificationToken,
         },
         { id: user!.id },
       ),
       this.mailService.sendPasswordResetVerificationEmail(otp, user!.email),
     ]);
 
-    return { verificationToken: passwordResetVerificationToken };
+    return { verification_token: verificationToken };
   }
 
   @Public()
@@ -198,7 +136,6 @@ export class UsersController {
     const payload = this.jwtService.verify(body.verificationToken, {
       secret: applicationConfig.jwt.secret,
     });
-
     if (isNilOrEmpty(payload.email)) {
       throw new Unauthorized();
     }

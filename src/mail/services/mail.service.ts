@@ -61,7 +61,7 @@ export class MailService {
             <mj-section padding="0px">
             <mj-column>
                 <mj-text font-size="16px" font-weight="600" align="center" color="#E8EDF3" padding="0px">
-                Team Gradeviser
+                Team Dashpad
                 </mj-text>
             </mj-column>
             </mj-section>
@@ -84,7 +84,7 @@ export class MailService {
       [to],
       subject,
       htmlString,
-      'Gradeviser',
+      'Dashpad',
     );
   }
 

@@ -1,10 +1,10 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from 'src/utils/decorators/public';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { isNilOrEmpty } from 'src/utils/helpers';
+import { isNilOrEmpty, isPresent } from 'src/utils/helpers';
 import { InvalidArguments } from 'src/utils/exceptions';
+import { RegistrationInitializeDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -13,18 +13,22 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('register')
-  register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  registrationInitialized(@Body() body: RegistrationInitializeDto) {
+    return this.authService.register(body);
   }
 
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    if (isNilOrEmpty(loginDto.email)) {
+  login(@Body() body: LoginDto) {
+    if (isNilOrEmpty(body.email) && isNilOrEmpty(body.username)) {
       throw new InvalidArguments();
     }
 
-    return this.authService.login(loginDto);
+    if (isPresent(body.email) && isPresent(body.username)) {
+      throw new InvalidArguments();
+    }
+
+    return this.authService.login(body);
   }
 }
