@@ -32,7 +32,7 @@ export class ChatService {
     offset: number = 0,
     limit: number = 10,
   ): Promise<{
-    messages: Message[];
+    data: Message[];
     total: number;
     limit: number;
     offset: number;
@@ -50,7 +50,7 @@ export class ChatService {
     });
 
     return {
-      messages: rows,
+      data: rows,
       total: count,
       limit: limit,
       offset: offset,
