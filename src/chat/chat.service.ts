@@ -40,8 +40,10 @@ export class ChatService {
     const { count, rows } = await this.messageModel.findAndCountAll({
       where: {
         [Op.or]: [
-          { senderId: userId1, receiverId: userId2 },
-          { senderId: userId2, receiverId: userId1 },
+          { senderId: userId1 },
+          { receiverId: userId2 },
+          { senderId: userId2 },
+          { receiverId: userId1 },
         ],
       },
       order: [['createdAt', 'DESC']],
