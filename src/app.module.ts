@@ -4,6 +4,8 @@ import { applicationConfig } from 'config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
@@ -18,7 +20,15 @@ import { AuthModule } from './auth/auth.module';
       autoLoadModels: true,
       synchronize: true,
     }),
+    RedisModule.forRoot({
+      type: 'single',
+      options: {
+        host: applicationConfig.redis.host || 'localhost',
+        port: parseInt(applicationConfig.redis.port || '6379', 10),
+      },
+    }),
     AuthModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

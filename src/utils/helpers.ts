@@ -183,3 +183,17 @@ export const hashPassword = (password: string) => {
 export const comparePassword = (password: string, hash: string) => {
   return bcrypt.compare(password, hash);
 };
+
+export const getUserFromAuthToken = async (
+  payload: { accessToken: string },
+  jwtService: JwtService,
+) => {
+  const data = await jwtService.verifyAsync(payload.accessToken, {
+    secret: applicationConfig.jwt.secret,
+  });
+
+  return {
+    id: data.sub,
+    username: data.username,
+  };
+};

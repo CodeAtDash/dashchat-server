@@ -5,6 +5,9 @@ import { User } from '../entities/user.entity';
 import { removeUndefinedKeys } from 'src/utils/helpers';
 import { InvalidUser } from 'src/utils/exceptions';
 import { CreateUser } from '../types/create-user';
+import { PaginationDto } from '../dto/pagination.dto';
+import { FindAndCountOptions } from 'sequelize';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class UsersService {
@@ -33,12 +36,7 @@ export class UsersService {
     });
   }
 
-  async create({
-    name,
-    email,
-    username,
-    password,
-  }: CreateUser) {
+  async create({ name, email, username, password }: CreateUser) {
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(password, saltOrRounds);
 
@@ -102,5 +100,37 @@ export class UsersService {
     }
 
     return bcrypt.compare(password, user.password);
+  }
+
+  async getAllUsers(query: PaginationDto) {
+    const { offset = 0, limit = 10, order = 'asc', search } = query;
+
+    const options: FindAndCountOptions = {
+      limit: limit,
+      offset: (offset) * limit,
+      order: [['name', order.toUpperCase()]],
+      where: {},
+    };
+
+    if (search) {
+      options.where = {
+        name: {
+          [Op.iLike]: `%${search}%`,
+        },
+      };
+    }
+
+    const { rows, count } = await this.userModel.findAndCountAll(options);
+
+    return {
+      data: rows,
+      total: count,
+      offset,
+      limit,
+    };
+  }
+
+  async findAll(payload: any) {
+    return this.userModel.findAll(payload);
   }
 }

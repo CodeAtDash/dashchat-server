@@ -35,6 +35,7 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 import { Public } from 'src/utils/decorators/public';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { RegistrationFinalizeDto } from 'src/auth/dto/register.dto';
+import { PaginationDto } from './dto/pagination.dto';
 
 @Controller('user')
 export class UsersController {
@@ -190,5 +191,15 @@ export class UsersController {
     }
 
     return { isChanged: true };
+  }
+
+  @UseGuards(AuthGuard)
+  @Post()
+  async getAllUsers(
+    @Body() body: PaginationDto,
+  ) {
+    const { offset, limit, order, search } = body;
+
+    return this.usersService.getAllUsers({ offset, limit, order, search });
   }
 }
