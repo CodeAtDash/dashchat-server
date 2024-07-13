@@ -5,4 +5,4 @@ import { RedisService } from './services/redis.services';
   providers: [RedisService],
   exports: [RedisService],
 })
-export class MailModule {}
+export class CommonModule {}
