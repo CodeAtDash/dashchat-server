@@ -50,4 +50,19 @@ export class RedisService {
       throw new Error(`Failed to get Redis key "${key}": ${error.message}`);
     }
   }
+
+  async deleteObject(key: string): Promise<void> {
+    if (typeof key !== 'string') {
+      throw new InvalidKeyError('Invalid Key');
+    }
+
+    try {
+      const result = await this.redis.del(key);
+      if (result === 0) {
+        throw new Error(`Key "${key}" does not exist`);
+      }
+    } catch (error: any) {
+      throw new Error(`Failed to delete Redis key "${key}": ${error.message}`);
+    }
+  }
 }
