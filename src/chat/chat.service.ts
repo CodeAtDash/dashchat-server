@@ -30,7 +30,7 @@ export class ChatService {
   async findMessagesBetweenUsers(
     userId1: string,
     userId2: string,
-    offset: number = 1,
+    offset: number = 0,
     limit: number = 10,
   ): Promise<{
     messages: Message[];
@@ -38,7 +38,7 @@ export class ChatService {
     limit: number;
     offset: number;
   }> {
-    const offsets = (offset - 1) * limit;
+    const offsets = offset * limit;
 
     const { count, rows } = await this.messageModel.findAndCountAll({
       where: {

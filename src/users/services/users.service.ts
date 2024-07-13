@@ -103,11 +103,11 @@ export class UsersService {
   }
 
   async getAllUsers(query: PaginationDto) {
-    const { offset = 1, limit = 10, order = 'asc', search } = query;
+    const { offset = 0, limit = 10, order = 'asc', search } = query;
 
     const options: FindAndCountOptions = {
       limit: limit,
-      offset: (offset - 1) * limit,
+      offset: (offset) * limit,
       order: [['name', order.toUpperCase()]],
       where: {},
     };

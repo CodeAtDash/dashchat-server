@@ -14,7 +14,7 @@ export class FindMessagesDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  offset?: number = 1;
+  offset?: number = 0;
 
   @IsOptional()
   @Type(() => Number)
