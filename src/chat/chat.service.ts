@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Message } from './entities/message.entity';
-import { User } from 'src/users/entities/user.entity';
-import { Op, Sequelize } from 'sequelize';
+import { Op } from 'sequelize';
 import { ChatQueryDto } from './dto/chat-query.dto';
 import { UsersService } from 'src/users/services/users.service';
 
@@ -38,8 +37,6 @@ export class ChatService {
     limit: number;
     offset: number;
   }> {
-    const offsets = offset * limit;
-
     const { count, rows } = await this.messageModel.findAndCountAll({
       where: {
         [Op.or]: [
@@ -49,7 +46,7 @@ export class ChatService {
       },
       order: [['createdAt', 'DESC']],
       limit,
-      offset: offsets,
+      offset,
     });
 
     return {
@@ -61,8 +58,7 @@ export class ChatService {
   }
 
   async getAllUserChats(currentUserId: string, query: ChatQueryDto) {
-    const { offset = 1, limit = 10, search } = query;
-    const offsets = (offset - 1) * limit;
+    const { offset = 0, limit = 10, search } = query;
 
     const messages = await this.messageModel.findAll({
       where: {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from 'src/users/entities/user.entity';
@@ -20,12 +20,13 @@ export class ChatsController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('user')
+  @Get('user/:userId')
   async findMessagesBetweenUsers(
     @CurrentUser() currentUser: User,
     @Body() body: FindMessagesDto,
+    @Param('userId') userId: string,
   ) {
-    const { userId, offset, limit } = body;
+    const { offset, limit } = body;
 
     return this.chatService.findMessagesBetweenUsers(
       currentUser.id,

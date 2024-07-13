@@ -194,10 +194,8 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard)
-  @Post()
-  async getAllUsers(
-    @Body() body: PaginationDto,
-  ) {
+  @Get()
+  async getAllUsers(@Body() body: PaginationDto) {
     const { offset, limit, order, search } = body;
 
     return this.usersService.getAllUsers({ offset, limit, order, search });

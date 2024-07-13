@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt } from 'class-validator';
+import { IsOptional, IsInt } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class MessageDto {
@@ -8,9 +8,6 @@ export class MessageDto {
 }
 
 export class FindMessagesDto {
-  @IsString()
-  userId: string;
-
   @IsOptional()
   @Type(() => Number)
   @IsInt()
