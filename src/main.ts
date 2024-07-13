@@ -20,6 +20,7 @@ async function bootstrap() {
   console.log(mermaidEdges.join('\n'));
   //keep eye on it,not to fall into circular dependencies, comment it out for production
 
+  app.enableCors();
   app.useGlobalPipes(new ValidationPipe());
 
   const { httpAdapter } = app.get(HttpAdapterHost);
