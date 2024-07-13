@@ -14,6 +14,7 @@ import { UsersService } from './services/users.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from './entities/user.entity';
 import {
+  EmailAlreadyVerified,
   EmailEnteredNotExist,
   InvalidOtp,
   PleaseEnterDifferentPassword,
@@ -23,6 +24,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { applicationConfig } from 'config';
 import {
+  generateJwt,
   generateOtpAndVerificationToken,
   isNilOrEmpty,
   isPresent,
@@ -65,36 +67,48 @@ export class UsersController {
       secret: applicationConfig.jwt.secret,
     });
 
-    if (!(isPresent(payload.email) && isPresent(payload.username))) {
+    if (!(isPresent(payload.id) && isPresent(payload.username))) {
       throw new Unauthorized();
     }
 
     const user = await this.usersService.findOne({
-      email: payload.email,
+      id: payload.id,
       username: payload.username,
-      isVerified: true,
     });
 
-    const [affectedCount] = await this.usersService.update(
+    if (!isPresent(user)) {
+      throw new Unauthorized();
+    }
+
+    if (user!.isVerified) {
+      throw new EmailAlreadyVerified();
+    }
+
+    const updatedUser = await this.usersService.update(
       {
         otp: null,
         verificationToken: null,
         isVerified: true,
       },
       {
-        email: payload.email,
-        username: payload.username,
+        id: payload.id,
         otp: body.otp,
         verificationToken: body.verificationToken,
         isVerified: false,
       },
     );
 
-    if (affectedCount !== 1) {
+    if (!(updatedUser[0] === 1)) {
       throw new InvalidOtp();
     }
 
-    return { isVerified: true };
+    return {
+      isVerified: true,
+      ...(await generateJwt(
+        { id: user!.id, username: user!.username },
+        this.jwtService,
+      )),
+    };
   }
 
   @Public()
@@ -127,7 +141,7 @@ export class UsersController {
       this.mailService.sendPasswordResetVerificationEmail(otp, user!.email),
     ]);
 
-    return { verification_token: verificationToken };
+    return { verificationToken };
   }
 
   @Public()

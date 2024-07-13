@@ -38,8 +38,6 @@ export class UsersService {
     email,
     username,
     password,
-    otp,
-    verificationToken,
   }: CreateUser) {
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(password, saltOrRounds);
@@ -50,13 +48,12 @@ export class UsersService {
       username,
       password: hash,
       isVerified: false,
-      otp,
-      verificationToken,
     });
   }
 
   async update(
     payload: {
+      id?: string;
       name?: string;
       password?: string;
       otp?: string | null;
@@ -72,7 +69,7 @@ export class UsersService {
       isVerified?: boolean;
     },
   ) {
-    return this.userModel.update(payload, { where: filters });
+    return this.userModel.update(payload, { where: filters, returning: true });
   }
 
   async remove({ email, username }: { email?: string; username?: string }) {

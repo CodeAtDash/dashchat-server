@@ -3,6 +3,4 @@ export class CreateUser {
   email: string;
   username: string;
   password: string;
-  otp: string;
-  verificationToken: string;
 }

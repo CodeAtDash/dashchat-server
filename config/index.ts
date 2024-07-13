@@ -8,7 +8,7 @@ export const applicationConfig = {
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'chat-app-backend-secret',
+    secret: process.env.JWT_SECRET || 'chat-app-secret',
     expiresIn: '24h',
     algorithm: 'HS256' as Algorithm,
     issuer: 'chat-app-backend',
