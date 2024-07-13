@@ -3,6 +3,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsResponse,
 } from '@nestjs/websockets';
 import { MessageDto } from './dto/message.dto';
 import { ChatService } from './chat.service';
@@ -25,7 +26,7 @@ export class ChatGateway {
 
   async handleConnection(client: Socket) {
     const user = await this.getUser(
-      client.handshake.headers.accesstoken as string,
+      client.handshake.headers.access_token as string,
     );
 
     if (!user) {
@@ -38,7 +39,7 @@ export class ChatGateway {
 
   async handleDisconnect(client: Socket) {
     const user = await this.getUser(
-      client.handshake.headers.accesstoken as string,
+      client.handshake.headers.access_token as string,
     );
 
     if (!user) {
@@ -50,22 +51,27 @@ export class ChatGateway {
   }
 
   @SubscribeMessage('message')
-  async handleChatUpdate(client: Socket, @MessageBody() body: MessageDto) {
-    console.log(body.receiverId, body.content);
-    console.log(client);
+  async handleChatUpdate(client: Socket, body: MessageDto) {
     const user = await this.getUser(
-      client.handshake.headers.accesstoken as string,
+      client.handshake.headers.access_token as string,
     );
+
 
     if (!user) {
       client.disconnect();
       return;
     }
-    await this.chatService.createMessage(
-      body.senderId = user.id,
+    
+    const response = await this.chatService.createMessage(
+      user.id,
       body.receiverId,
       body.content,
     );
+    
+    // client.emit(client.id, body.content);
+    await this.server.emit(body.receiverId, {response, senderId: user.id});
+
+    return response;
   }
 
   async getUser(accessToken: string) {
