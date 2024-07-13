@@ -166,7 +166,10 @@ export const generateJwt = async (
   const jwtPayload = { sub: payload.id, username: payload.username };
 
   return {
-    accessToken: await jwtService.signAsync(jwtPayload),
+    accessToken: await jwtService.signAsync(jwtPayload, {
+      secret: applicationConfig.jwt.secret,
+      expiresIn: '24h',
+    }),
     expiresIn: applicationConfig.jwt.expiresIn,
   };
 };

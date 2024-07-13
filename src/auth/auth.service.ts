@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/services/users.service';
-import { generateOtpAndVerificationToken, isPresent } from 'src/utils/helpers';
+import {
+  generateJwt,
+  generateOtpAndVerificationToken,
+} from 'src/utils/helpers';
 import {
   DuplicateEmail,
   DuplicateUsername,
@@ -9,11 +12,7 @@ import {
   WrongPassword,
 } from 'src/utils/exceptions';
 import { LoginDto } from './dto/login.dto';
-import { User } from 'src/users/entities/user.entity';
-import { applicationConfig } from 'config';
-import {
-  RegistrationInitializeDto,
-} from './dto/register.dto';
+import { RegistrationInitializeDto } from './dto/register.dto';
 import { MailService } from 'src/mail/services/mail.service';
 
 @Injectable()
@@ -24,35 +23,20 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async generateJwt(user: User) {
-    const payload = { sub: user.id, email: user.email };
-
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-      expires_in: applicationConfig.jwt.expiresIn,
-    };
-  }
-
   async register(registerDto: RegistrationInitializeDto) {
-    const isUsernameAlreadyTaken = isPresent(
-      await this.usersService.findOne({
+    const [existingUsername, existingEmail] = await Promise.all([
+      this.usersService.findOne({
         username: registerDto.username,
         isVerified: true,
       }),
-    );
+      this.usersService.findOne({ email: registerDto.email, isVerified: true }),
+    ]);
 
-    if (isUsernameAlreadyTaken) {
+    if (existingUsername) {
       throw new DuplicateUsername();
     }
 
-    const isEmailAlreadyTaken = isPresent(
-      await this.usersService.findOne({
-        email: registerDto.email,
-        isVerified: true,
-      }),
-    );
-
-    if (isEmailAlreadyTaken) {
+    if (existingEmail) {
       throw new DuplicateEmail();
     }
 
@@ -67,26 +51,24 @@ export class AuthService {
       emailExist && this.usersService.remove({ email: registerDto.email }),
     ]);
 
+    const user = await this.usersService.create(registerDto);
+
     const { otp, verificationToken } = generateOtpAndVerificationToken(
       {
-        email: registerDto.email,
-        username: registerDto.username,
+        id: user.id,
+        username: user.username,
       },
       this.jwtService,
     );
 
-    await this.mailService.sendVerificationEmail(otp, registerDto.email);
-
-    const user = await this.usersService.create({
-      ...registerDto,
-      otp,
-      verificationToken,
-    });
+    await Promise.all([
+      this.mailService.sendVerificationEmail(otp, user.email),
+      this.usersService.update({ otp, verificationToken }, { id: user.id }),
+    ]);
 
     return {
       user,
-      ...(await this.generateJwt(user)),
-      verification_token: verificationToken,
+      verificationToken,
     };
   }
 
@@ -111,7 +93,10 @@ export class AuthService {
 
     return {
       user,
-      ...(await this.generateJwt(user)),
+      ...(await generateJwt(
+        { id: user.id, username: user.username },
+        this.jwtService,
+      )),
     };
   }
 }
