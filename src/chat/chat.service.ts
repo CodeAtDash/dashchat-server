@@ -56,47 +56,54 @@ export class ChatService {
   async getAllAddedUser(currentUserId: string, query: PaginationFilters) {
     const { offset = 0, limit = 10 } = query;
 
-    const total = await this.sequelize.query(`SELECT COUNT(*) AS total_count
-FROM (
-    SELECT id
-    FROM (
-        SELECT sender_id AS id
-        FROM messages
-        WHERE sender_id = ${currentUserId}
-           OR receiver_id = ${currentUserId}
-        UNION
-        SELECT receiver_id AS id
-        FROM messages
-        WHERE sender_id = ${currentUserId}
-           OR receiver_id = ${currentUserId}
-    ) AS combined_ids
-    WHERE id <> ${currentUserId}
-) AS total_results;`);
+    const totalQuery = `
+        SELECT COUNT(*) AS total_count
+        FROM (
+            SELECT id
+            FROM (
+                SELECT sender_id AS id
+                FROM messages
+                WHERE sender_id = '${currentUserId}'
+                   OR receiver_id = '${currentUserId}'
+                UNION
+                SELECT receiver_id AS id
+                FROM messages
+                WHERE sender_id = '${currentUserId}'
+                   OR receiver_id = '${currentUserId}'
+            ) AS combined_ids
+            WHERE id <> '${currentUserId}'
+        ) AS total_results;
+    `;
 
-    const users = await this.sequelize
-      .query(`SELECT u.id, u.name, u.username, u.email, u.created_at, updated_at
-FROM (
-    SELECT id
-    FROM (
-        SELECT sender_id AS id
-        FROM messages
-        WHERE sender_id = ${currentUserId}
-           OR receiver_id = ${currentUserId}
-        UNION
-        SELECT receiver_id AS id
-        FROM messages
-        WHERE sender_id = ${currentUserId}
-           OR receiver_id = ${currentUserId}
-    ) AS combined_ids
-    WHERE id <> ${currentUserId}
-    ORDER BY id
-    LIMIT ${limit} OFFSET ${offset}
-) AS ids
-JOIN users u ON ids.id = u.id;`);
+    const total = await this.sequelize.query(totalQuery, { plain: true });
+
+    const usersQuery = `
+        SELECT u.id, u.name, u.username, u.email, u.created_at, u.updated_at
+        FROM (
+            SELECT id
+            FROM (
+                SELECT sender_id AS id
+                FROM messages
+                WHERE sender_id = '${currentUserId}'
+                   OR receiver_id = '${currentUserId}'
+                UNION
+                SELECT receiver_id AS id
+                FROM messages
+                WHERE sender_id = '${currentUserId}'
+                   OR receiver_id = '${currentUserId}'
+            ) AS combined_ids
+            WHERE id <> '${currentUserId}'
+            ORDER BY id
+            LIMIT ${limit} OFFSET ${offset}
+        ) AS ids
+        JOIN users u ON ids.id = u.id;
+    `;
+
+    const users = await this.sequelize.query(usersQuery);
 
     return {
-      users: users,
-      total,
+      users: users[0],
+      total: typeof total?.total_count === 'string' ? +total.total_count : 0,
       offset,
       limit,
     };
