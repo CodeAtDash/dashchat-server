@@ -64,13 +64,13 @@ export class ChatGateway {
       content: body.content,
     });
 
-    const receiverDetails = await this.userService.findOne({
-      id: message.receiverId,
+    const senderDetails = await this.userService.findOne({
+      id: message.senderId,
     });
 
     const response = {
       ...message.dataValues,
-      receiverUserDetails: receiverDetails,
+      senderUserDetails: senderDetails,
     };
 
     const receiverClientId = await this.redisService.getObject(body.receiverId);
