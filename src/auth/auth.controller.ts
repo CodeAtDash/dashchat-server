@@ -2,8 +2,6 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from 'src/utils/decorators/public';
 import { LoginDto } from './dto/login.dto';
-import { isNilOrEmpty, isPresent } from 'src/utils/helpers';
-import { InvalidArguments } from 'src/utils/exceptions';
 import { RegistrationInitializeDto } from './dto/register.dto';
 
 @Controller('auth')

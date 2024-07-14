@@ -1,9 +1,7 @@
 import {
-  MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
 } from '@nestjs/websockets';
 import { MessageDto } from './dto/message.dto';
 import { ChatService } from './chat.service';
@@ -56,20 +54,19 @@ export class ChatGateway {
       client.handshake.headers.access_token as string,
     );
 
-
     if (!user) {
       client.disconnect();
       return;
     }
-    
+
     const response = await this.chatService.createMessage(
       user.id,
       body.receiverId,
       body.content,
     );
-    
+
     // client.emit(client.id, body.content);
-    await this.server.emit(body.receiverId, {response, senderId: user.id});
+    await this.server.emit(body.receiverId, { response, senderId: user.id });
 
     return response;
   }

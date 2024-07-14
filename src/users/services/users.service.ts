@@ -107,7 +107,7 @@ export class UsersService {
 
     const options: FindAndCountOptions = {
       limit: limit,
-      offset: (offset) * limit,
+      offset: offset * limit,
       order: [['name', order.toUpperCase()]],
       where: {},
     };
