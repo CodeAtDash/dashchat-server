@@ -59,17 +59,17 @@ export class ChatService {
     // Query to get total count
     const totalQuery = `
         SELECT COUNT(*) AS total_count FROM (
-            SELECT u.id, u.name, u.username, u.email, ranked_ids.content AS content,ranked_ids.created_at AS time
+            SELECT u.name, u.username, u.email, ranked_ids.content AS content,ranked_ids.created_at AS time, ranked_ids.sender_id AS sender_id, ranked_ids.receiver_id AS receiver_id
         FROM (
-            SELECT id, content, created_at,
+            SELECT id, sender_id, receiver_id, content, created_at,
                    ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at DESC) AS rn
             FROM (
-                SELECT sender_id AS id, content, created_at
+                SELECT sender_id AS id, sender_id, receiver_id,content, created_at
                 FROM messages
                 WHERE sender_id = '${currentUserId}'
                    OR receiver_id = '${currentUserId}'
                 UNION
-                SELECT receiver_id AS id, content, created_at
+                SELECT receiver_id AS id, sender_id, receiver_id, content, created_at
                 FROM messages
                 WHERE sender_id = '${currentUserId}'
                    OR receiver_id = '${currentUserId}'
@@ -84,17 +84,17 @@ export class ChatService {
 
     // Query to fetch paginated users
     const usersQuery = `
-        SELECT u.id, u.name, u.username, u.email, ranked_ids.content AS content,ranked_ids.created_at AS time
+        SELECT u.name, u.username, u.email, ranked_ids.content AS content,ranked_ids.created_at AS time, ranked_ids.sender_id AS sender_id, ranked_ids.receiver_id AS receiver_id
         FROM (
-            SELECT id, content, created_at,
+            SELECT id, sender_id, receiver_id, content, created_at,
                    ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at DESC) AS rn
             FROM (
-                SELECT sender_id AS id, content, created_at
+                SELECT sender_id AS id, sender_id, receiver_id, content, created_at
                 FROM messages
                 WHERE sender_id = '${currentUserId}'
                    OR receiver_id = '${currentUserId}'
                 UNION
-                SELECT receiver_id AS id, content, created_at
+                SELECT receiver_id AS id, sender_id, receiver_id, content, created_at
                 FROM messages
                 WHERE sender_id = '${currentUserId}'
                    OR receiver_id = '${currentUserId}'
