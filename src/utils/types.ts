@@ -3,6 +3,7 @@ import { Order } from './enums';
 export interface PaginationFilters {
   limit?: number;
   offset?: number;
+  search?: string;
   createdAtOrder?: Order;
 }
 
