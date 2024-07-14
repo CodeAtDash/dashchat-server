@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from 'src/users/entities/user.entity';
@@ -13,9 +20,9 @@ export class ChatsController {
   @Get()
   async getAllAddedUser(
     @CurrentUser() currentUser: User,
-    @Body() body: PaginationFilters,
+    @Query() query: PaginationFilters,
   ) {
-    return this.chatService.getAllAddedUser(currentUser.id, body);
+    return this.chatService.getAllAddedUser(currentUser.id, query);
   }
 
   @UseGuards(AuthGuard)
