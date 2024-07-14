@@ -33,7 +33,7 @@ export class Message extends Model {
   @BelongsTo(() => User, 'receiverId')
   receiver: User;
 
-  @Column({ allowNull: false })
+  @Column({ allowNull: false, type: DataType.TEXT })
   content: string;
 
   @CreatedAt
