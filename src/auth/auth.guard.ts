@@ -10,6 +10,7 @@ import { applicationConfig } from 'config';
 import { Request } from 'express';
 import { UsersService } from 'src/users/services/users.service';
 import { IS_PUBLIC_KEY } from 'src/utils/decorators/public';
+import { isPresent } from 'src/utils/helpers';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -45,6 +46,10 @@ export class AuthGuard implements CanActivate {
         id: payload.sub,
         username: payload.username,
       });
+
+      if (!isPresent(user)) {
+        throw new UnauthorizedException();
+      }
 
       request['user'] = user;
     } catch {

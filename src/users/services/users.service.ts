@@ -4,10 +4,10 @@ import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../entities/user.entity';
 import { removeUndefinedKeys } from 'src/utils/helpers';
 import { InvalidUser } from 'src/utils/exceptions';
-import { CreateUser } from '../types/create-user';
 import { PaginationDto } from '../dto/pagination.dto';
 import { FindAndCountOptions } from 'sequelize';
 import { Op } from 'sequelize';
+import { RegistrationInitializeDto } from 'src/auth/dto/register.dto';
 
 @Injectable()
 export class UsersService {
@@ -36,7 +36,7 @@ export class UsersService {
     });
   }
 
-  async create({ name, email, username, password }: CreateUser) {
+  async create({ name, email, username, password }: RegistrationInitializeDto) {
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(password, saltOrRounds);
 
@@ -79,19 +79,10 @@ export class UsersService {
     });
   }
 
-  async verifyPassword({
-    id,
-    email,
-    password,
-  }: {
-    id?: string;
-    email?: string;
-    password: string;
-  }) {
+  async verifyPassword({ id, password }: { id?: string; password: string }) {
     const user = await this.userModel.scope('withPassword').findOne({
       where: removeUndefinedKeys({
         id,
-        email,
       }),
     });
 
@@ -107,7 +98,7 @@ export class UsersService {
 
     const options: FindAndCountOptions = {
       limit: limit,
-      offset: (offset) * limit,
+      offset: offset,
       order: [['name', order.toUpperCase()]],
       where: {},
     };
@@ -123,14 +114,10 @@ export class UsersService {
     const { rows, count } = await this.userModel.findAndCountAll(options);
 
     return {
-      data: rows,
+      users: rows,
       total: count,
       offset,
       limit,
     };
-  }
-
-  async findAll(payload: any) {
-    return this.userModel.findAll(payload);
   }
 }

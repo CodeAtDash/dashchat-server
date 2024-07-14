@@ -1,10 +1,4 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'src/utils/constants';
 
 export class LoginDto {
@@ -12,6 +6,7 @@ export class LoginDto {
   @IsNotEmpty()
   email: string;
 
+  //Disabled Username Login
   // @IsUsername()
   // @IsOptional()
   // username: string;

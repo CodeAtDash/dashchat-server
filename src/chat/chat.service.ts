@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Message } from './entities/message.entity';
 import { Op } from 'sequelize';
-import { ChatQueryDto } from './dto/chat-query.dto';
-import { UsersService } from 'src/users/services/users.service';
+import { Sequelize } from 'sequelize-typescript';
+import { PaginationFilters } from 'src/utils/types';
 
 @Injectable()
 export class ChatService {
@@ -11,19 +11,15 @@ export class ChatService {
     @InjectModel(Message)
     private messageModel: typeof Message,
 
-    private readonly userService: UsersService,
+    private readonly sequelize: Sequelize,
   ) {}
 
-  async createMessage(
-    senderId: string,
-    receiverId: string,
-    content: string,
-  ): Promise<Message> {
-    return this.messageModel.create({
-      senderId,
-      receiverId,
-      content,
-    });
+  async createMessage(payload: {
+    senderId: string;
+    receiverId: string;
+    content: string;
+  }): Promise<Message> {
+    return this.messageModel.create(payload);
   }
 
   async findMessagesBetweenUsers(
@@ -32,7 +28,7 @@ export class ChatService {
     offset: number = 0,
     limit: number = 10,
   ): Promise<{
-    data: Message[];
+    messages: Message[];
     total: number;
     limit: number;
     offset: number;
@@ -50,57 +46,86 @@ export class ChatService {
     });
 
     return {
-      data: rows,
+      messages: rows,
       total: count,
       limit: limit,
       offset: offset,
     };
   }
 
-  async getAllUserChats(currentUserId: string, query: ChatQueryDto) {
-    const { offset = 0, limit = 10, search } = query;
+  async getAllAddedUser(currentUserId: string, query: PaginationFilters) {
+    const { offset = 0, limit = 10 } = query;
 
-    const messages = await this.messageModel.findAll({
-      where: {
-        [Op.or]: [{ senderId: currentUserId }, { receiverId: currentUserId }],
-      },
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset,
-    });
+    // Query to get total count
+    const totalQuery = `
+        SELECT COUNT(*) AS total_count FROM (
+            SELECT ranked_ids.id
+            FROM (
+                SELECT id, created_at,
+                       ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at DESC) AS rn
+                FROM (
+                    SELECT sender_id AS id, created_at
+                    FROM messages
+                    WHERE sender_id = '${currentUserId}'
+                       OR receiver_id = '${currentUserId}'
+                    UNION
+                    SELECT receiver_id AS id, created_at
+                    FROM messages
+                    WHERE sender_id = '${currentUserId}'
+                       OR receiver_id = '${currentUserId}'
+                ) AS combined_ids
+                WHERE id <> '${currentUserId}'
+            ) AS ranked_ids
+            JOIN users u ON ranked_ids.id = u.id
+            WHERE rn = 1
+        ) AS total_results;
+    `;
 
-    const userIds = Array.from(
-      new Set(
-        messages.map((message) =>
-          message.senderId === currentUserId
-            ? message.receiverId
-            : message.senderId,
-        ),
-      ),
-    );
+    // Query to fetch paginated users
+    const usersQuery = `
+        SELECT u.id, u.name, u.username, u.email, ranked_ids.created_at AS last_chat_time
+        FROM (
+            SELECT id, created_at,
+                   ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at DESC) AS rn
+            FROM (
+                SELECT sender_id AS id, created_at
+                FROM messages
+                WHERE sender_id = '${currentUserId}'
+                   OR receiver_id = '${currentUserId}'
+                UNION
+                SELECT receiver_id AS id, created_at
+                FROM messages
+                WHERE sender_id = '${currentUserId}'
+                   OR receiver_id = '${currentUserId}'
+            ) AS combined_ids
+            WHERE id <> '${currentUserId}'
+        ) AS ranked_ids
+        JOIN users u ON ranked_ids.id = u.id
+        WHERE rn = 1
+        ORDER BY ranked_ids.created_at DESC, u.id
+        LIMIT ${limit} OFFSET ${offset};
+    `;
 
-    const userWhere: any = {
-      id: {
-        [Op.in]: userIds,
-      },
-    };
+    try {
+      const totalResult = await this.sequelize.query(totalQuery, {
+        plain: true,
+      });
+      const usersResult = await this.sequelize.query(usersQuery);
 
-    if (search) {
-      userWhere.name = {
-        [Op.iLike]: `%${search}%`,
+      const total =
+        typeof totalResult?.total_count === 'string'
+          ? +totalResult.total_count
+          : 0;
+
+      return {
+        users: usersResult[0],
+        total,
+        offset,
+        limit,
       };
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
     }
-
-    const users = await this.userService.findAll({
-      where: userWhere,
-      attributes: ['id', 'name', 'email', 'createdAt'],
-      order: [['createdAt', 'DESC']],
-    });
-
-    return {
-      data: users,
-      offset,
-      limit,
-    };
   }
 }

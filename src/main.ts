@@ -18,7 +18,7 @@ async function bootstrap() {
     ({ from, to }) => `  ${from.module.name}-->${to.module.name}`,
   );
   console.log(mermaidEdges.join('\n'));
-  //keep eye on it,not to fall into circular dependencies, comment it out for production
+  //keep eye on it, not to fall into circular dependencies, comment it out for production
 
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe());

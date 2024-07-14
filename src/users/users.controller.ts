@@ -53,7 +53,10 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Patch()
-  async updateUser(@CurrentUser() currentUser: User, @Body() body: any) {
+  async updateUser(
+    @CurrentUser() currentUser: User,
+    @Body() body: { name: string },
+  ) {
     return this.usersService.update(
       { name: body.name },
       { id: currentUser.id },
@@ -126,6 +129,7 @@ export class UsersController {
 
     const { otp, verificationToken } = generateOtpAndVerificationToken(
       {
+        id: user!.id,
         email: body.email,
       },
       this.jwtService,
@@ -151,11 +155,12 @@ export class UsersController {
     const payload = this.jwtService.verify(body.verificationToken, {
       secret: applicationConfig.jwt.secret,
     });
-    if (isNilOrEmpty(payload.email)) {
+    if (isNilOrEmpty(payload.email) || isNilOrEmpty(payload.id)) {
       throw new Unauthorized();
     }
 
     const user = await this.usersService.findOne({
+      id: payload.id,
       email: payload.email,
       isVerified: true,
     });
@@ -165,7 +170,7 @@ export class UsersController {
     }
 
     const isMatch = await this.usersService.verifyPassword({
-      email: payload.email,
+      id: payload.id,
       password: body.password,
     });
 
@@ -180,6 +185,7 @@ export class UsersController {
     const [affectedCount] = await this.usersService.update(
       { password: hash, otp: null, verificationToken: null },
       {
+        id: payload.id,
         email: payload.email,
         otp: body.otp,
         verificationToken: body.verificationToken,

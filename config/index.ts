@@ -8,10 +8,10 @@ export const applicationConfig = {
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'chat-app-secret',
+    secret: process.env.JWT_SECRET || 'contact-me-secret',
     expiresIn: '24h',
     algorithm: 'HS256' as Algorithm,
-    issuer: 'chat-app-backend',
+    issuer: 'contact-me-server',
     emailTokenExpiresIn: '5m',
   },
 
@@ -20,7 +20,7 @@ export const applicationConfig = {
     host: process.env.DB_HOST || 'localhost',
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_NAME || 'chat-app-backend',
+    database: process.env.DB_NAME || 'contact-me-server',
     port: process.env.DB_PORT || '5432',
   },
 

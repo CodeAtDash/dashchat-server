@@ -1,10 +1,16 @@
-import { Body, Controller, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from 'src/users/entities/user.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { ChatQueryDto } from './dto/chat-query.dto';
-import { FindMessagesDto } from './dto/message.dto';
+import { PaginationFilters } from 'src/utils/types';
 
 @Controller('chat')
 export class ChatsController {
@@ -12,18 +18,18 @@ export class ChatsController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async getAllUserChats(
+  async getAllAddedUser(
     @CurrentUser() currentUser: User,
-    @Body() body: ChatQueryDto,
+    @Query() query: PaginationFilters,
   ) {
-    return this.chatService.getAllUserChats(currentUser.id, body);
+    return this.chatService.getAllAddedUser(currentUser.id, query);
   }
 
   @UseGuards(AuthGuard)
   @Get('user/:userId')
   async findMessagesBetweenUsers(
     @CurrentUser() currentUser: User,
-    @Body() body: FindMessagesDto,
+    @Body() body: PaginationFilters,
     @Param('userId') userId: string,
   ) {
     const { offset, limit } = body;
