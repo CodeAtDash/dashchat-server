@@ -83,10 +83,8 @@ export class ChatGateway {
   }
 
   async getUser(accessToken: string) {
-    const { id, username } = await getUserFromAuthToken(
-      { accessToken },
-      this.jwtService,
-    );
-    return this.userService.findOne({ id, username });
+    const { id } = await getUserFromAuthToken({ accessToken }, this.jwtService);
+
+    return this.userService.findOne({ id });
   }
 }
