@@ -201,7 +201,7 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard)
-  @Post()
+  @Get()
   async getAllUsers(@Body() body: PaginationDto) {
     const { offset, limit, order, search } = body;
 
@@ -211,7 +211,6 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get(':userId')
   async getUser(@Param('userId') userId: string) {
-    
     return this.usersService.findOne({ id: userId });
   }
 }
