@@ -20,7 +20,7 @@ export class ChatsController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('user/:userId')
+  @Get(':userId')
   async findMessagesBetweenUsers(
     @CurrentUser() currentUser: User,
     @Query() query: PaginationFilters,
