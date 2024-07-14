@@ -7,7 +7,11 @@ import { MessageDto } from './dto/message.dto';
 import { ChatService } from './chat.service';
 import { Socket } from 'socket.io';
 import { RedisService } from 'src/common/services/redis.services';
-import { getUserFromAuthToken } from 'src/utils/helpers';
+import {
+  getUserFromAuthToken,
+  isNilOrEmpty,
+  isPresent,
+} from 'src/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/services/users.service';
 
@@ -27,12 +31,12 @@ export class ChatGateway {
       client.handshake.headers.access_token as string,
     );
 
-    if (!user) {
+    if (isNilOrEmpty(user)) {
       client.disconnect();
       return;
     }
 
-    await this.redisService.setObject(user.id, 'online');
+    await this.redisService.setObject(user!.id, client.id);
   }
 
   async handleDisconnect(client: Socket) {
@@ -40,12 +44,7 @@ export class ChatGateway {
       client.handshake.headers.access_token as string,
     );
 
-    if (!user) {
-      client.disconnect();
-      return;
-    }
-
-    await this.redisService.setObject(user.id, new Date());
+    await this.redisService.setObject(user!.id, new Date());
   }
 
   @SubscribeMessage('message')
@@ -59,14 +58,17 @@ export class ChatGateway {
       return;
     }
 
-    const response = await this.chatService.createMessage(
-      user.id,
-      body.receiverId,
-      body.content,
-    );
+    const response = await this.chatService.createMessage({
+      senderId: user.id,
+      receiverId: body.receiverId,
+      content: body.content,
+    });
 
-    // client.emit(client.id, body.content);
-    await this.server.emit(body.receiverId, { response, senderId: user.id });
+    const receiverClientId = await this.redisService.getObject(body.receiverId);
+
+    if (isPresent(receiverClientId)) {
+      this.server.to(receiverClientId).emit('message', response);
+    }
 
     return response;
   }

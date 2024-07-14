@@ -98,7 +98,7 @@ export class UsersService {
 
     const options: FindAndCountOptions = {
       limit: limit,
-      offset: offset * limit,
+      offset: offset,
       order: [['name', order.toUpperCase()]],
       where: {},
     };
@@ -114,15 +114,10 @@ export class UsersService {
     const { rows, count } = await this.userModel.findAndCountAll(options);
 
     return {
-      data: rows,
+      users: rows,
       total: count,
       offset,
       limit,
     };
-  }
-
-  //modify this function to accept a payload remove any
-  async findAll(payload: any) {
-    return this.userModel.findAll(payload);
   }
 }

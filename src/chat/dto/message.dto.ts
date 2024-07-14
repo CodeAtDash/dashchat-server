@@ -2,7 +2,6 @@ import { IsOptional, IsInt } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class MessageDto {
-  senderId: string;
   receiverId: string;
   content: string;
 }

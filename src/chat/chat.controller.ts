@@ -12,11 +12,11 @@ export class ChatsController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async getAllUserChats(
+  async getAllAddedUser(
     @CurrentUser() currentUser: User,
     @Body() body: ChatQueryDto,
   ) {
-    return this.chatService.getAllUserChats(currentUser.id, body);
+    return this.chatService.getAllAddedUser(currentUser.id, body);
   }
 
   @UseGuards(AuthGuard)
