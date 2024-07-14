@@ -67,7 +67,6 @@ export class AuthService {
     ]);
 
     return {
-      user,
       verificationToken,
     };
   }

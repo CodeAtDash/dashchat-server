@@ -6,6 +6,7 @@ export class LoginDto {
   @IsNotEmpty()
   email: string;
 
+  //Disabled Username Login
   // @IsUsername()
   // @IsOptional()
   // username: string;

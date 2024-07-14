@@ -19,6 +19,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   login(@Body() body: LoginDto) {
+    //Disabled username as for login
     // if (isNilOrEmpty(body.email) && isNilOrEmpty(body.username)) {
     //   throw new InvalidArguments();
     // }
