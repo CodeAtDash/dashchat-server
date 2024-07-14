@@ -93,18 +93,23 @@ export class UsersService {
     return bcrypt.compare(password, user.password);
   }
 
-  async getAllUsers(body: PaginationDto) {
-    const { offset = 0, limit = 10, order = 'asc', search } = body;
+  async getAllUsers(id: string, query: PaginationDto) {
+    const { offset = 0, limit = 10, order = 'asc', search } = query;
 
     const options: FindAndCountOptions = {
       limit: limit,
       offset: offset,
       order: [['name', order.toUpperCase()]],
-      where: {},
+      where: {
+        id: {
+          [Op.ne]: id,
+        },
+      },
     };
 
     if (search) {
       options.where = {
+        ...options.where,
         name: {
           [Op.iLike]: `%${search}%`,
         },
@@ -116,8 +121,8 @@ export class UsersService {
     return {
       users: rows,
       total: count,
-      offset,
-      limit,
+      offset: typeof offset === 'string' ? parseInt(offset) : offset,
+      limit: typeof limit === 'string' ? parseInt(limit) : limit,
     };
   }
 }

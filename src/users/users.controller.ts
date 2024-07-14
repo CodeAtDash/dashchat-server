@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -202,10 +203,18 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async getAllUsers(@Body() body: PaginationDto) {
-    const { offset, limit, order, search } = body;
+  async getAllUsers(
+    @CurrentUser() currentUser: User,
+    @Query() query: PaginationDto,
+  ) {
+    const { offset, limit, order, search } = query;
 
-    return this.usersService.getAllUsers({ offset, limit, order, search });
+    return this.usersService.getAllUsers(currentUser.id, {
+      offset,
+      limit,
+      order,
+      search,
+    });
   }
 
   @UseGuards(AuthGuard)
