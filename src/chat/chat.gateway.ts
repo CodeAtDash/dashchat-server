@@ -58,11 +58,20 @@ export class ChatGateway {
       return;
     }
 
-    const response = await this.chatService.createMessage({
+    const message = await this.chatService.createMessage({
       senderId: user.id,
       receiverId: body.receiverId,
       content: body.content,
     });
+
+    const senderDetails = await this.userService.findOne({
+      id: message.senderId,
+    });
+
+    const response = {
+      ...message.dataValues,
+      senderUserDetails: senderDetails,
+    };
 
     const receiverClientId = await this.redisService.getObject(body.receiverId);
 

@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
   Put,
@@ -200,10 +201,17 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard)
-  @Get()
+  @Post()
   async getAllUsers(@Body() body: PaginationDto) {
     const { offset, limit, order, search } = body;
 
     return this.usersService.getAllUsers({ offset, limit, order, search });
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':userId')
+  async getUser(@Param('userId') userId: string) {
+    
+    return this.usersService.findOne({ id: userId });
   }
 }

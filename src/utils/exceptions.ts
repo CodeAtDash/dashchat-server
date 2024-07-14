@@ -124,3 +124,13 @@ export class InvalidKeyError extends HttpException {
     super(message, HttpStatus.BAD_REQUEST);
   }
 }
+
+export class UserIdCannotBeSameAsCurrentUserId extends CustomException {
+  constructor() {
+    super(
+      'User Id cannot be same as current user id',
+      'UserIdCannotBeSameAsCurrentUserId',
+      HttpStatus.CONFLICT,
+    );
+  }
+}
