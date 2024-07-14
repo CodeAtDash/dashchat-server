@@ -1,68 +1,31 @@
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
-import { InvalidKeyError } from 'src/errors/redis';
+import { InvalidKeyError } from 'src/utils/exceptions';
 
 @Injectable()
 export class RedisService {
   constructor(@InjectRedis() private readonly redis: Redis) {}
 
-  async setObject(
-    key: string,
-    value: any,
-    expiryInSeconds?: number,
-  ): Promise<void> {
+  async setObject(key: string, value: any): Promise<void> {
     if (typeof key !== 'string') {
-      throw new InvalidKeyError('Invalid Key');
+      throw new InvalidKeyError('Key must be a string');
     }
-
-    try {
-      const serializedValue = JSON.stringify(value);
-
-      if (
-        expiryInSeconds &&
-        typeof expiryInSeconds === 'number' &&
-        expiryInSeconds > 0
-      ) {
-        await this.redis.set(key, serializedValue, 'EX', expiryInSeconds);
-      } else {
-        await this.redis.set(key, serializedValue);
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to set Redis key "${key}": ${error.message}`);
-    }
+    const expirationInSeconds = 90 * 24 * 60 * 60; // 3 months approximated to 90 days
+    await this.redis.set(key, JSON.stringify(value), 'EX', expirationInSeconds);
   }
 
   async getObject(key: string): Promise<any> {
     if (typeof key !== 'string') {
-      throw new InvalidKeyError('Invalid Key');
+      throw new InvalidKeyError('Key must be a string');
     }
 
-    try {
-      const data = await this.redis.get(key);
+    const data = await this.redis.get(key);
 
-      if (!data) {
-        return {};
-      }
-
-      return JSON.parse(data);
-    } catch (error: any) {
-      throw new Error(`Failed to get Redis key "${key}": ${error.message}`);
-    }
-  }
-
-  async deleteObject(key: string): Promise<void> {
-    if (typeof key !== 'string') {
-      throw new InvalidKeyError('Invalid Key');
+    if (!data) {
+      return {};
     }
 
-    try {
-      const result = await this.redis.del(key);
-      if (result === 0) {
-        throw new Error(`Key "${key}" does not exist`);
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to delete Redis key "${key}": ${error.message}`);
-    }
+    return JSON.parse(data);
   }
 }

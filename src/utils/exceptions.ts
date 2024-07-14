@@ -118,3 +118,9 @@ export class InvalidOtp extends CustomException {
     super('Invalid OTP', 'InvalidOtp', HttpStatus.NOT_ACCEPTABLE);
   }
 }
+
+export class InvalidKeyError extends HttpException {
+  constructor(message: string) {
+    super(message, HttpStatus.BAD_REQUEST);
+  }
+}
