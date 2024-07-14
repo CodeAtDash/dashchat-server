@@ -93,8 +93,8 @@ export class UsersService {
     return bcrypt.compare(password, user.password);
   }
 
-  async getAllUsers(query: PaginationDto) {
-    const { offset = 0, limit = 10, order = 'asc', search } = query;
+  async getAllUsers(body: PaginationDto) {
+    const { offset = 0, limit = 10, order = 'asc', search } = body;
 
     const options: FindAndCountOptions = {
       limit: limit,

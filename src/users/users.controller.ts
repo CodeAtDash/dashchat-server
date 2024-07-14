@@ -200,7 +200,7 @@ export class UsersController {
   }
 
   @UseGuards(AuthGuard)
-  @Get()
+  @Post()
   async getAllUsers(@Body() body: PaginationDto) {
     const { offset, limit, order, search } = body;
 
