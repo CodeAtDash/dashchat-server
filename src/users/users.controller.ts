@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
   Put,
@@ -205,5 +206,12 @@ export class UsersController {
     const { offset, limit, order, search } = body;
 
     return this.usersService.getAllUsers({ offset, limit, order, search });
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':userId')
+  async getUser(@Param('userId') userId: string) {
+    
+    return this.usersService.findOne({ id: userId });
   }
 }
