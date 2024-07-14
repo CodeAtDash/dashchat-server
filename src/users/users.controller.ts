@@ -19,6 +19,7 @@ import {
   EmailAlreadyVerified,
   EmailEnteredNotExist,
   InvalidOtp,
+  InvalidUser,
   PleaseEnterDifferentPassword,
   Unauthorized,
 } from 'src/utils/exceptions';
@@ -220,6 +221,12 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get(':userId')
   async getUser(@Param('userId') userId: string) {
-    return this.usersService.findOne({ id: userId });
+    const user = await this.usersService.findOne({ id: userId });
+
+    if (isNilOrEmpty(user)) {
+      throw new InvalidUser();
+    }
+
+    return user;
   }
 }
