@@ -15,7 +15,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/services/users.service';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class ChatGateway {
   @WebSocketServer() server: any;
 
