@@ -2,9 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Message } from './entities/message.entity';
 import { Op } from 'sequelize';
-import { ChatQueryDto } from './dto/chat-query.dto';
-import { UsersService } from 'src/users/services/users.service';
 import { Sequelize } from 'sequelize-typescript';
+import { PaginationFilters } from 'src/utils/types';
 
 @Injectable()
 export class ChatService {
@@ -13,8 +12,6 @@ export class ChatService {
     private messageModel: typeof Message,
 
     private readonly sequelize: Sequelize,
-
-    private readonly userService: UsersService,
   ) {}
 
   async createMessage(payload: {
@@ -31,7 +28,7 @@ export class ChatService {
     offset: number = 0,
     limit: number = 10,
   ): Promise<{
-    data: Message[];
+    messages: Message[];
     total: number;
     limit: number;
     offset: number;
@@ -49,15 +46,15 @@ export class ChatService {
     });
 
     return {
-      data: rows,
+      messages: rows,
       total: count,
       limit: limit,
       offset: offset,
     };
   }
 
-  async getAllAddedUser(currentUserId: string, query: ChatQueryDto) {
-    const { offset = 0, limit = 10, search } = query;
+  async getAllAddedUser(currentUserId: string, query: PaginationFilters) {
+    const { offset = 0, limit = 10 } = query;
 
     const total = await this.sequelize.query(`SELECT COUNT(*) AS total_count
 FROM (

@@ -1,19 +1,9 @@
-import { IsOptional, IsInt } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsUUID } from "class-validator";
 
 export class MessageDto {
+  @IsUUID()
   receiverId: string;
+
+  @IsString()
   content: string;
-}
-
-export class FindMessagesDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  offset?: number = 0;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  limit?: number = 10;
 }

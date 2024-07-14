@@ -3,8 +3,7 @@ import { ChatService } from './chat.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from 'src/users/entities/user.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { ChatQueryDto } from './dto/chat-query.dto';
-import { FindMessagesDto } from './dto/message.dto';
+import { PaginationFilters } from 'src/utils/types';
 
 @Controller('chat')
 export class ChatsController {
@@ -14,7 +13,7 @@ export class ChatsController {
   @Get()
   async getAllAddedUser(
     @CurrentUser() currentUser: User,
-    @Body() body: ChatQueryDto,
+    @Body() body: PaginationFilters,
   ) {
     return this.chatService.getAllAddedUser(currentUser.id, body);
   }
@@ -23,7 +22,7 @@ export class ChatsController {
   @Get('user/:userId')
   async findMessagesBetweenUsers(
     @CurrentUser() currentUser: User,
-    @Body() body: FindMessagesDto,
+    @Body() body: PaginationFilters,
     @Param('userId') userId: string,
   ) {
     const { offset, limit } = body;
