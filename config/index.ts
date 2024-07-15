@@ -34,4 +34,11 @@ export const applicationConfig = {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
   },
+
+  linkedin: {
+    serverUrl: process.env.AUTH_SERVER_URL,
+    clientId: process.env.CLIENT_ID,
+    secret: process.env.CLIENT_SECRET,
+    redirectUrl: process.env.REDIRECT_URI,
+  },
 };
