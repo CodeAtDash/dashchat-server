@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
       },
     }),
     AuthModule,
+    UsersModule,
     ChatModule,
   ],
   controllers: [AppController],
