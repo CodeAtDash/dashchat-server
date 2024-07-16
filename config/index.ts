@@ -36,7 +36,8 @@ export const applicationConfig = {
   },
 
   linkedin: {
-    serverUrl: process.env.AUTH_SERVER_URL,
+    serverUrl: 'https://www.linkedin.com/oauth/v2',
+    userInfoUrl: 'https://api.linkedin.com/v2/userinfo',
     clientId: process.env.CLIENT_ID,
     secret: process.env.CLIENT_SECRET,
     redirectUrl: process.env.REDIRECT_URI,
