@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from '../entities/user.entity';
-import { removeUndefinedKeys } from 'src/utils/helpers';
+import { isPresent, removeUndefinedKeys } from 'src/utils/helpers';
 import { InvalidUser } from 'src/utils/exceptions';
 import { PaginationDto } from '../dto/pagination.dto';
 import { FindAndCountOptions } from 'sequelize';
@@ -124,5 +124,26 @@ export class UsersService {
       offset: typeof offset === 'string' ? parseInt(offset) : offset,
       limit: typeof limit === 'string' ? parseInt(limit) : limit,
     };
+  }
+
+  async handleUser(user: {
+    sub: string;
+    email_verified: boolean;
+    name: string;
+    email: string;
+  }) {
+    const { sub, email_verified, name, email } = user;
+
+    const userExists = await this.findOne({ email });
+    if (isPresent(userExists)) {
+      return userExists;
+    }
+
+    return this.userModel.create({
+      name,
+      email,
+      username: sub,
+      isVerified: email_verified,
+    });
   }
 }
