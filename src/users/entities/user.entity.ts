@@ -43,7 +43,7 @@ export class User extends Model {
   @Column({ allowNull: false, unique: true })
   username: string;
 
-  @Column({ allowNull: false })
+  @Column({ allowNull: true })
   password: string;
 
   @Column({ allowNull: false, defaultValue: false })

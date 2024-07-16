@@ -3,8 +3,8 @@ import { AppModule } from './app.module';
 import { applicationConfig } from 'config';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './utils/all-exception.filter';
-
 import { SpelunkerModule } from 'nestjs-spelunker';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +21,8 @@ async function bootstrap() {
   //keep eye on it, not to fall into circular dependencies, comment it out for production
 
   app.enableCors();
+  app.use(cookieParser());
+
   app.useGlobalPipes(new ValidationPipe());
 
   const { httpAdapter } = app.get(HttpAdapterHost);
