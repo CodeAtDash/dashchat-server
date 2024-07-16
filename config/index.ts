@@ -34,4 +34,12 @@ export const applicationConfig = {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
   },
+
+  linkedin: {
+    serverUrl: 'https://www.linkedin.com/oauth/v2',
+    userInfoUrl: 'https://api.linkedin.com/v2/userinfo',
+    clientId: process.env.CLIENT_ID,
+    secret: process.env.CLIENT_SECRET,
+    redirectUrl: process.env.REDIRECT_URI,
+  },
 };

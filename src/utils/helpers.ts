@@ -197,3 +197,7 @@ export const getUserFromAuthToken = async (
     username: data.username,
   };
 };
+
+export const feDomain = () => {
+  return `http://127.0.0.1:3000`;
+};
