@@ -8,10 +8,10 @@ export const applicationConfig = {
   },
 
   jwt: {
-    secret: process.env.JWT_SECRET || 'contact-me-secret',
+    secret: process.env.JWT_SECRET || 'dashchat-secret',
     expiresIn: '24h',
     algorithm: 'HS256' as Algorithm,
-    issuer: 'contact-me-server',
+    issuer: 'dashchat-server',
     emailTokenExpiresIn: '5m',
   },
 
@@ -20,7 +20,7 @@ export const applicationConfig = {
     host: process.env.DB_HOST || 'localhost',
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_NAME || 'contact-me-server',
+    database: process.env.DB_NAME || 'dashchat-server',
     port: process.env.DB_PORT || '5432',
   },
 
