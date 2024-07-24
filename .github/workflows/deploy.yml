@@ -39,6 +39,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} <<EOF
             cd /home/ubuntu/backend
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
+            export DOCKER_HUB_ACCESS_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
             docker-compose pull
             docker-compose up -d --remove-orphans
+            docker ps -a
+            docker-compose logs backend
           EOF
