@@ -1,6 +1,8 @@
 version: '3'
 services:
   backend:
-    image: '${DOCKER_HUB_USERNAME}/backend:latest'
+    image: ${DOCKER_HUB_USERNAME}/backend:latest
     ports:
       - "3001:3000"
+env_file:
+  - .env

@@ -34,15 +34,13 @@ jobs:
 
       - name: Deploy to EC2
         env:
-          DOCKER_HUB_USERNAME: ${{secrets.DOCKER_HUB_USERNAME}}
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-
-            export DOCKER_HUB_USERNAME=${{ DOCKER_HUB_USERNAME }}
-            
             cd /home/ubuntu/backend
+            echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" > .env
+            echo "DOCKER_HUB_ACCESS_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" >> .env
             docker-compose pull
             docker-compose up -d
           EOF
-
-
