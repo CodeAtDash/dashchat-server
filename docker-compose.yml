@@ -4,5 +4,3 @@ services:
     image: ${DOCKER_HUB_USERNAME}/backend:latest
     ports:
       - "3001:3000"
-env_file:
-  - .env
