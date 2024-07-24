@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 services:
   backend:
     image: ${DOCKER_HUB_USERNAME}/backend:latest
