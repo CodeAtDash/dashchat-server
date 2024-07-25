@@ -1,6 +1,19 @@
 version: '3.8'
+
 services:
-  backend:
-    image: ${DOCKER_HUB_USERNAME}/backend:latest
+  server:
+    image: '${DOCKER_HUB_USERNAME}/dashchat-server'
     ports:
-      - "3001:3000"
+      - 3001:3001'
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REDIRECT_URI=${REDIRECT_URI}
+    restart: unless-stopped
