@@ -46,11 +46,11 @@ jobs:
 
       - name: Create directory on EC2 instance
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SSH_HOST }} "mkdir -p /home/${{ env.SSH_USER }}/app"
+          ssh -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SSH_HOST }} "mkdir -p /home/ubuntu/app"
 
       - name: Sync docker-compose files
         run: |
-          scp -o StrictHostKeyChecking=no docker-compose.yml ${{ env.SSH_USER }}@${{ env.SSH_HOST }}:/home/${{ env.SSH_USER }}/app/docker-compose.yml
+          scp -o StrictHostKeyChecking=no docker-compose.yml ${{ env.SSH_USER }}@${{ env.SSH_HOST }}:/home/ubuntu/app/docker-compose.yml
 
       - name: Deploy to EC2
         run: |
@@ -70,6 +70,6 @@ jobs:
             docker rm dashchat-server || true
             docker rmi $DOCKER_HUB_USERNAME/dashchat-server || true
 
-            docker-compose -f /home/${{ env.SSH_USER }}/app/docker-compose.yml pull
-            docker-compose -f /home/${{ env.SSH_USER }}/app/docker-compose.yml up -d --remove-orphans
+            docker-compose -f /home/ubuntu/app/docker-compose.yml pull
+            docker-compose -f /home/ubuntu/app/docker-compose.yml up -d --remove-orphans
           EOF
