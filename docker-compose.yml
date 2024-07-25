@@ -4,7 +4,7 @@ services:
   server:
     image: '${DOCKER_HUB_USERNAME}/dashchat-server'
     ports:
-      - 3001:3001'
+      - 3001:3001
     environment:
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
