@@ -44,7 +44,7 @@ jobs:
           docker build -t ${{ env.DOCKER_HUB_USERNAME }}/dashchat-server .
           docker push ${{ env.DOCKER_HUB_USERNAME }}/dashchat-server
 
-       - name: Add SSH key
+      - name: Add SSH key
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
