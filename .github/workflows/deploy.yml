@@ -44,6 +44,11 @@ jobs:
           docker build -t ${{ env.DOCKER_HUB_USERNAME }}/dashchat-server .
           docker push ${{ env.DOCKER_HUB_USERNAME }}/dashchat-server
 
+       - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
+
       - name: Create directory on EC2 instance
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.SSH_USER }}@${{ env.SSH_HOST }} "mkdir -p /home/ubuntu/app"
