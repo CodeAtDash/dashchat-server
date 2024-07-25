@@ -41,8 +41,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build ${{ env.DOCKER_USERNAME }}/dashchat-server .
-          docker push ${{ env.DOCKER_USERNAME }}/dashchat-server
+          docker build -t ${{ env.DOCKER_HUB_USERNAME }}/dashchat-server .
+          docker push ${{ env.DOCKER_HUB_USERNAME }}/dashchat-server
 
       - name: Create directory on EC2 instance
         run: |
