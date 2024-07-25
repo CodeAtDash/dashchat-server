@@ -19,6 +19,7 @@ jobs:
       DB_USER: ${{ secrets.DB_USER }}
       DB_NAME: ${{ secrets.DB_NAME }}
       DB_PORT: ${{ secrets.DB_PORT }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -70,6 +71,7 @@ jobs:
             export DB_USER=${{ env.DB_USER }}
             export DB_NAME=${{ env.DB_NAME }}
             export DB_PORT=${{ env.DB_PORT }}
+            export DB_PASSWORD=${{ env.DB_PASSWORD }}
             export AWS_ACCESS_KEY=${{ env.AWS_ACCESS_KEY }}
             export AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}
             export AWS_REGION=${{ env.AWS_REGION }}

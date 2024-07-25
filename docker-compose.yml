@@ -10,6 +10,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_NAME=${DB_NAME}
       - DB_PORT=${DB_PORT}
+      - DB_PASSWORD=${DB_PASSWORD}
       - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
