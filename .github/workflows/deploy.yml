@@ -57,9 +57,14 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no docker-compose.yml ${{ env.SSH_USER }}@${{ env.SSH_HOST }}:/home/ubuntu/app/docker-compose.yml
 
+      - name: Set up SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
+          chmod 600 ssh_key
+
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ env.SSH_PRIVATE_KEY }} ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no -i ssh_key ${{ env.SSH_USER }}@${{ env.SSH_HOST }} << EOF
             export DOCKER_HUB_USERNAME=${{ env.DOCKER_HUB_USERNAME }}
             export DB_HOST=${{ env.DB_HOST }}
             export DB_USER=${{ env.DB_USER }}
@@ -78,3 +83,6 @@ jobs:
             docker-compose -f /home/ubuntu/app/docker-compose.yml pull
             docker-compose -f /home/ubuntu/app/docker-compose.yml up -d --remove-orphans
           EOF
+
+      - name: Clean up
+        run: rm ssh_key
