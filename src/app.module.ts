@@ -20,6 +20,16 @@ import { UsersModule } from './users/users.module';
       logging: false,
       autoLoadModels: true,
       synchronize: true,
+      ...(process.env.NODE_ENV !== 'development'
+        ? {
+            dialectOptions: {
+              ssl: {
+                rejectUnauthorized: false,
+                sslmode: 'no-verify',
+              },
+            },
+          }
+        : {}),
     }),
     RedisModule.forRoot({
       type: 'single',

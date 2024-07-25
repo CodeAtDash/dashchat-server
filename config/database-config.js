@@ -13,5 +13,16 @@ module.exports = {
   database: process.env.DB_NAME,
   port: parseInt(process.env.DB_PORT),
 
+  ...(process.env.NODE_ENV !== 'development'
+    ? {
+        dialectOptions: {
+          ssl: {
+            rejectUnauthorized: false,
+            sslmode: 'no-verify',
+          },
+        },
+      }
+    : {}),
+
   seederStorage: 'sequelize',
 };
