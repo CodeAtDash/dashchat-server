@@ -78,8 +78,8 @@ jobs:
             export CLIENT_ID=${{ env.CLIENT_ID }}
             export CLIENT_SECRET=${{ env.CLIENT_SECRET }}
             export REDIRECT_URI=${{ env.REDIRECT_URI }}
-            docker stop dashchat-server || true
-            docker rm dashchat-server || true
+            docker stop $DOCKER_HUB_USERNAME/dashchat-server || true
+            docker rm $DOCKER_HUB_USERNAME/dashchat-server || true
             docker rmi $DOCKER_HUB_USERNAME/dashchat-server || true
 
             docker-compose -f /home/ubuntu/app/docker-compose.yml pull
