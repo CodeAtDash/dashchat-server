@@ -39,11 +39,13 @@ import { Public } from 'src/utils/decorators/public';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { RegistrationFinalizeDto } from 'src/auth/dto/register.dto';
 import { PaginationDto } from './dto/pagination.dto';
+import { RedisService } from 'src/common/services/redis.services';
 
 @Controller('user')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
@@ -226,7 +228,13 @@ export class UsersController {
     if (isNilOrEmpty(user)) {
       throw new InvalidUser();
     }
-
-    return user;
+    return {
+      ...user!.dataValues,
+      status: isNilOrEmpty(await this.redisService.getObject(user!.id))
+        ? '3 Months ago'
+        : isNaN(Date.parse(await this.redisService.getObject(user!.id)))
+          ? 'Online'
+          : await this.redisService.getObject(user!.id),
+    };
   }
 }
