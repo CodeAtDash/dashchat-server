@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from 'src/users/entities/user.entity';
@@ -38,5 +38,18 @@ export class ChatsController {
       offset,
       limit,
     );
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('read/:id')
+  async markMessageAsRead(
+    @CurrentUser() currentUser: User,
+    @Param('id') id: string,
+  ) {
+    return this.chatService.update({
+      id,
+      receiverId: currentUser.id,
+      isRead: true,
+    });
   }
 }

@@ -14,12 +14,21 @@ export class ChatService {
     private readonly sequelize: Sequelize,
   ) {}
 
-  async createMessage(payload: {
+  async create(payload: {
     senderId: string;
     receiverId: string;
     content: string;
   }): Promise<Message> {
     return this.messageModel.create(payload);
+  }
+
+  async update(payload: { id: string; receiverId: string; isRead: boolean }) {
+    return this.messageModel.update(
+      { isRead: payload.isRead },
+      {
+        where: { id: payload.id, receiverId: payload.receiverId },
+      },
+    );
   }
 
   async findMessagesBetweenUsers(

@@ -58,7 +58,7 @@ export class ChatGateway {
       return;
     }
 
-    const message = await this.chatService.createMessage({
+    const message = await this.chatService.create({
       senderId: user.id,
       receiverId: body.receiverId,
       content: body.content,
