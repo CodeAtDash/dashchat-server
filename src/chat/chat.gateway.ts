@@ -75,7 +75,7 @@ export class ChatGateway {
 
     const receiverClientId = await this.redisService.getObject(body.receiverId);
 
-    if (isPresent(receiverClientId)) {
+    if (isPresent(receiverClientId) && isNaN(Date.parse(receiverClientId))) {
       this.server.to(receiverClientId).emit('message', response);
     }
 
