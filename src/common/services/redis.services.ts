@@ -20,12 +20,17 @@ export class RedisService {
       throw new InvalidKeyError('Key must be a string');
     }
 
-    const data = await this.redis.get(key);
+    try {
+      const data = await this.redis.get(key);
 
-    if (!data) {
-      return {};
+      if (!data) {
+        return null;
+      }
+
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error retrieving or parsing data from Redis:', error);
+      throw new Error('Could not retrieve or parse data from Redis');
     }
-
-    return JSON.parse(data);
   }
 }
