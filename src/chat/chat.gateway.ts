@@ -58,7 +58,7 @@ export class ChatGateway {
       return;
     }
 
-    const message = await this.chatService.createMessage({
+    const message = await this.chatService.create({
       senderId: user.id,
       receiverId: body.receiverId,
       content: body.content,
@@ -75,11 +75,29 @@ export class ChatGateway {
 
     const receiverClientId = await this.redisService.getObject(body.receiverId);
 
-    if (isPresent(receiverClientId)) {
+    if (isPresent(receiverClientId) && isNaN(Date.parse(receiverClientId))) {
       this.server.to(receiverClientId).emit('message', response);
     }
 
     return response;
+  }
+
+  @SubscribeMessage('typing')
+  async handleTyping(client: Socket, body: { receiverId: string }) {
+    const user = await this.getUser(
+      client.handshake.headers.access_token as string,
+    );
+
+    if (!user) {
+      client.disconnect();
+      return;
+    }
+
+    const receiverClientId = await this.redisService.getObject(body.receiverId);
+
+    if (isPresent(receiverClientId) && isNaN(Date.parse(receiverClientId))) {
+      this.server.to(receiverClientId).emit('typing', { senderId: user.id });
+    }
   }
 
   async getUser(accessToken: string) {

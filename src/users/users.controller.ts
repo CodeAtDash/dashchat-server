@@ -39,11 +39,13 @@ import { Public } from 'src/utils/decorators/public';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { RegistrationFinalizeDto } from 'src/auth/dto/register.dto';
 import { PaginationDto } from './dto/pagination.dto';
+import { RedisService } from 'src/common/services/redis.services';
 
 @Controller('user')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
+    private readonly redisService: RedisService,
     private jwtService: JwtService,
     private mailService: MailService,
   ) {}
@@ -51,7 +53,12 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get('me')
   getProfile(@Request() req: any) {
-    return req.user;
+    try {
+      return req.user;
+    } catch (error) {
+      console.error('Error getting profile:', error);
+      throw new Unauthorized();
+    }
   }
 
   @UseGuards(AuthGuard)
@@ -60,146 +67,166 @@ export class UsersController {
     @CurrentUser() currentUser: User,
     @Body() body: { name: string },
   ) {
-    return this.usersService.update(
-      { name: body.name },
-      { id: currentUser.id },
-    );
+    try {
+      return this.usersService.update(
+        { name: body.name },
+        { id: currentUser.id },
+      );
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new InvalidUser();
+    }
   }
 
   @Public()
   @HttpCode(HttpStatus.OK)
   @Put('register')
   async registrationFinalize(@Body() body: RegistrationFinalizeDto) {
-    const payload = this.jwtService.verify(body.verificationToken, {
-      secret: applicationConfig.jwt.secret,
-    });
+    try {
+      const payload = this.jwtService.verify(body.verificationToken, {
+        secret: applicationConfig.jwt.secret,
+      });
 
-    if (!(isPresent(payload.id) && isPresent(payload.username))) {
-      throw new Unauthorized();
-    }
+      if (!(isPresent(payload.id) && isPresent(payload.username))) {
+        throw new Unauthorized();
+      }
 
-    const user = await this.usersService.findOne({
-      id: payload.id,
-      username: payload.username,
-    });
-
-    if (!isPresent(user)) {
-      throw new Unauthorized();
-    }
-
-    if (user!.isVerified) {
-      throw new EmailAlreadyVerified();
-    }
-
-    const updatedUser = await this.usersService.update(
-      {
-        otp: null,
-        verificationToken: null,
-        isVerified: true,
-      },
-      {
+      const user = await this.usersService.findOne({
         id: payload.id,
-        otp: body.otp,
-        verificationToken: body.verificationToken,
-        isVerified: false,
-      },
-    );
+        username: payload.username,
+      });
 
-    if (!(updatedUser[0] === 1)) {
-      throw new InvalidOtp();
+      if (!isPresent(user)) {
+        throw new Unauthorized();
+      }
+
+      if (user!.isVerified) {
+        throw new EmailAlreadyVerified();
+      }
+
+      const updatedUser = await this.usersService.update(
+        {
+          otp: null,
+          verificationToken: null,
+          isVerified: true,
+        },
+        {
+          id: payload.id,
+          otp: body.otp,
+          verificationToken: body.verificationToken,
+          isVerified: false,
+        },
+      );
+
+      if (!(updatedUser[0] === 1)) {
+        throw new InvalidOtp();
+      }
+
+      return {
+        isVerified: true,
+        ...(await generateJwt(
+          { id: user!.id, username: user!.username },
+          this.jwtService,
+        )),
+      };
+    } catch (error) {
+      console.error('Error finalizing registration:', error);
+      throw new Unauthorized();
     }
-
-    return {
-      isVerified: true,
-      ...(await generateJwt(
-        { id: user!.id, username: user!.username },
-        this.jwtService,
-      )),
-    };
   }
 
   @Public()
   @Post('forgot-password')
   async forgotPassword(@Body() body: ForgotPasswordDto) {
-    const user = await this.usersService.findOne({
-      email: body.email,
-      isVerified: true,
-    });
-
-    if (isNilOrEmpty(user)) {
-      throw new EmailEnteredNotExist();
-    }
-
-    const { otp, verificationToken } = generateOtpAndVerificationToken(
-      {
-        id: user!.id,
+    try {
+      const user = await this.usersService.findOne({
         email: body.email,
-      },
-      this.jwtService,
-    );
+        isVerified: true,
+      });
 
-    await Promise.all([
-      this.usersService.update(
+      if (isNilOrEmpty(user)) {
+        throw new EmailEnteredNotExist();
+      }
+
+      const { otp, verificationToken } = generateOtpAndVerificationToken(
         {
-          otp,
-          verificationToken,
+          id: user!.id,
+          email: body.email,
         },
-        { id: user!.id },
-      ),
-      this.mailService.sendPasswordResetVerificationEmail(otp, user!.email),
-    ]);
+        this.jwtService,
+      );
 
-    return { verificationToken };
+      await Promise.all([
+        this.usersService.update(
+          {
+            otp,
+            verificationToken,
+          },
+          { id: user!.id },
+        ),
+        this.mailService.sendPasswordResetVerificationEmail(otp, user!.email),
+      ]);
+
+      return { verificationToken };
+    } catch (error) {
+      console.error('Error in forgot password:', error);
+      throw new Unauthorized();
+    }
   }
 
   @Public()
   @Post('update-password')
   async updatePassword(@Body() body: UpdatePasswordDto) {
-    const payload = this.jwtService.verify(body.verificationToken, {
-      secret: applicationConfig.jwt.secret,
-    });
-    if (isNilOrEmpty(payload.email) || isNilOrEmpty(payload.id)) {
-      throw new Unauthorized();
-    }
+    try {
+      const payload = this.jwtService.verify(body.verificationToken, {
+        secret: applicationConfig.jwt.secret,
+      });
+      if (isNilOrEmpty(payload.email) || isNilOrEmpty(payload.id)) {
+        throw new Unauthorized();
+      }
 
-    const user = await this.usersService.findOne({
-      id: payload.id,
-      email: payload.email,
-      isVerified: true,
-    });
-
-    if (isNilOrEmpty(user)) {
-      throw new Unauthorized();
-    }
-
-    const isMatch = await this.usersService.verifyPassword({
-      id: payload.id,
-      password: body.password,
-    });
-
-    if (isMatch) {
-      throw new PleaseEnterDifferentPassword();
-    }
-
-    const saltOrRounds = 10;
-
-    const hash = await bcrypt.hash(body.password, saltOrRounds);
-
-    const [affectedCount] = await this.usersService.update(
-      { password: hash, otp: null, verificationToken: null },
-      {
+      const user = await this.usersService.findOne({
         id: payload.id,
         email: payload.email,
-        otp: body.otp,
-        verificationToken: body.verificationToken,
-      },
-    );
+        isVerified: true,
+      });
 
-    if (affectedCount !== 1) {
-      throw new InvalidOtp();
+      if (isNilOrEmpty(user)) {
+        throw new Unauthorized();
+      }
+
+      const isMatch = await this.usersService.verifyPassword({
+        id: payload.id,
+        password: body.password,
+      });
+
+      if (isMatch) {
+        throw new PleaseEnterDifferentPassword();
+      }
+
+      const saltOrRounds = 10;
+
+      const hash = await bcrypt.hash(body.password, saltOrRounds);
+
+      const [affectedCount] = await this.usersService.update(
+        { password: hash, otp: null, verificationToken: null },
+        {
+          id: payload.id,
+          email: payload.email,
+          otp: body.otp,
+          verificationToken: body.verificationToken,
+        },
+      );
+
+      if (affectedCount !== 1) {
+        throw new InvalidOtp();
+      }
+
+      return { isChanged: true };
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw new Unauthorized();
     }
-
-    return { isChanged: true };
   }
 
   @UseGuards(AuthGuard)
@@ -208,25 +235,41 @@ export class UsersController {
     @CurrentUser() currentUser: User,
     @Query() query: PaginationDto,
   ) {
-    const { offset, limit, order, search } = query;
+    try {
+      const { offset, limit, order, search } = query;
 
-    return this.usersService.getAllUsers(currentUser.id, {
-      offset,
-      limit,
-      order,
-      search,
-    });
+      return this.usersService.getAllUsers(currentUser.id, {
+        offset,
+        limit,
+        order,
+        search,
+      });
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      throw new InvalidUser();
+    }
   }
 
   @UseGuards(AuthGuard)
   @Get(':userId')
   async getUser(@Param('userId') userId: string) {
-    const user = await this.usersService.findOne({ id: userId });
+    try {
+      const user = await this.usersService.findOne({ id: userId });
 
-    if (isNilOrEmpty(user)) {
+      if (isNilOrEmpty(user)) {
+        throw new InvalidUser();
+      }
+      return {
+        ...user!.dataValues,
+        status: isNilOrEmpty(await this.redisService.getObject(user!.id))
+          ? '3 Months ago'
+          : isNaN(Date.parse(await this.redisService.getObject(user!.id)))
+            ? 'Online'
+            : await this.redisService.getObject(user!.id),
+      };
+    } catch (error) {
+      console.error('Error getting user:', error);
       throw new InvalidUser();
     }
-
-    return user;
   }
 }

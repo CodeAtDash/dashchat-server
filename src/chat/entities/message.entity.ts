@@ -36,6 +36,9 @@ export class Message extends Model {
   @Column({ allowNull: false, type: DataType.TEXT })
   content: string;
 
+  @Column({ allowNull: false, type: DataType.BOOLEAN, defaultValue: false })
+  isRead: boolean;
+
   @CreatedAt
   createdAt: Date;
 

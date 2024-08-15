@@ -11,8 +11,19 @@ export class RedisService {
     if (typeof key !== 'string') {
       throw new InvalidKeyError('Key must be a string');
     }
-    const expirationInSeconds = 90 * 24 * 60 * 60; // 3 months approximated to 90 days
-    await this.redis.set(key, JSON.stringify(value), 'EX', expirationInSeconds);
+
+    try {
+      const expirationInSeconds = 90 * 24 * 60 * 60; // 3 months approximated to 90 days
+      await this.redis.set(
+        key,
+        JSON.stringify(value),
+        'EX',
+        expirationInSeconds,
+      );
+    } catch (error) {
+      console.error('Error setting object in Redis:', error);
+      throw new Error('Could not set object in Redis');
+    }
   }
 
   async getObject(key: string): Promise<any> {
@@ -20,12 +31,17 @@ export class RedisService {
       throw new InvalidKeyError('Key must be a string');
     }
 
-    const data = await this.redis.get(key);
+    try {
+      const data = await this.redis.get(key);
 
-    if (!data) {
-      return {};
+      if (!data) {
+        return null;
+      }
+
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error retrieving or parsing data from Redis:', error);
+      throw new Error('Could not retrieve or parse data from Redis');
     }
-
-    return JSON.parse(data);
   }
 }

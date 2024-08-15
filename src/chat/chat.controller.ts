@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Put,
+  Query,
+  UseGuards,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from 'src/users/entities/user.entity';
@@ -16,7 +25,14 @@ export class ChatsController {
     @CurrentUser() currentUser: User,
     @Query() query: PaginationFilters,
   ) {
-    return this.chatService.getAllAddedUser(currentUser.id, query);
+    try {
+      return await this.chatService.getAllAddedUser(currentUser.id, query);
+    } catch (error) {
+      throw new HttpException(
+        'Failed to get users',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @UseGuards(AuthGuard)
@@ -26,17 +42,44 @@ export class ChatsController {
     @Query() query: PaginationFilters,
     @Param('userId') userId: string,
   ) {
-    const { offset, limit } = query;
+    try {
+      const { offset, limit } = query;
 
-    if (currentUser.id === userId) {
-      throw new UserIdCannotBeSameAsCurrentUserId();
+      if (currentUser.id === userId) {
+        throw new UserIdCannotBeSameAsCurrentUserId();
+      }
+
+      return await this.chatService.findMessagesBetweenUsers(
+        currentUser.id,
+        userId,
+        offset,
+        limit,
+      );
+    } catch (error) {
+      throw new HttpException(
+        'Failed to find messages between users',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+  }
 
-    return this.chatService.findMessagesBetweenUsers(
-      currentUser.id,
-      userId,
-      offset,
-      limit,
-    );
+  @UseGuards(AuthGuard)
+  @Put('read/:id')
+  async markMessageAsRead(
+    @CurrentUser() currentUser: User,
+    @Param('id') id: string,
+  ) {
+    try {
+      return await this.chatService.update({
+        id,
+        receiverId: currentUser.id,
+        isRead: true,
+      });
+    } catch (error) {
+      throw new HttpException(
+        'Failed to mark message as read',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }
