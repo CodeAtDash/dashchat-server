@@ -33,6 +33,10 @@ export class GroupMembers extends Model {
   @BelongsTo(() => User)
   user: User;
 
-  @Column({ type: DataType.ENUM, allowNull: false, defaultValue: Role.MEMBER })
+  @Column({
+    type: DataType.ENUM(Role.MEMBER, Role.ADMIN),
+    allowNull: false,
+    defaultValue: Role.MEMBER,
+  })
   role: Role;
 }
