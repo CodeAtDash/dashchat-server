@@ -82,6 +82,24 @@ export class ChatGateway {
     return response;
   }
 
+  @SubscribeMessage('typing')
+  async handleTyping(client: Socket, body: { receiverId: string }) {
+    const user = await this.getUser(
+      client.handshake.headers.access_token as string,
+    );
+
+    if (!user) {
+      client.disconnect();
+      return;
+    }
+
+    const receiverClientId = await this.redisService.getObject(body.receiverId);
+
+    if (isPresent(receiverClientId) && isNaN(Date.parse(receiverClientId))) {
+      this.server.to(receiverClientId).emit('typing', { senderId: user.id });
+    }
+  }
+
   async getUser(accessToken: string) {
     const { id } = await getUserFromAuthToken({ accessToken }, this.jwtService);
 
