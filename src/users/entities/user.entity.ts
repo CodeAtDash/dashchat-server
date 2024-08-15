@@ -6,6 +6,7 @@ import {
   CreatedAt,
   DataType,
   DefaultScope,
+  HasMany,
   IsUUID,
   Model,
   PrimaryKey,
@@ -13,6 +14,8 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
+import { GroupMembers } from 'src/chat/entities/group-members.entity';
+import { Message } from 'src/chat/entities/message.entity';
 
 @DefaultScope(() => ({
   attributes: {
@@ -60,6 +63,15 @@ export class User extends Model {
 
   @UpdatedAt
   updatedAt: Date;
+
+  @HasMany(() => Message, 'senderId')
+  sentMessages: Message[];
+
+  @HasMany(() => Message, 'receiverId')
+  receivedMessages: Message[];
+
+  @HasMany(() => GroupMembers)
+  groupMemberships: GroupMembers[];
 
   @AfterCreate
   @AfterUpdate
