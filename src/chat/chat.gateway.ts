@@ -7,13 +7,11 @@ import { MessageDto } from './dto/message.dto';
 import { ChatService } from './chat.service';
 import { Socket } from 'socket.io';
 import { RedisService } from 'src/common/services/redis.services';
-import {
-  getUserFromAuthToken,
-  isNilOrEmpty,
-  isPresent,
-} from 'src/utils/helpers';
+import { getUserFromAuthToken, isPresent } from 'src/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/services/users.service';
+import { GroupMessageDto } from './dto/group-message.dto';
+import { GroupChatService } from './group-chat.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway {
@@ -24,27 +22,38 @@ export class ChatGateway {
     private readonly redisService: RedisService,
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
+    private readonly groupChatService: GroupChatService,
   ) {}
 
   async handleConnection(client: Socket) {
-    const user = await this.getUser(
-      client.handshake.headers.access_token as string,
-    );
+    try {
+      const user = await this.getUser(
+        client.handshake.headers.access_token as string,
+      );
 
-    if (isNilOrEmpty(user)) {
-      client.disconnect();
-      return;
+      if (!user) {
+        client.disconnect();
+        return;
+      }
+
+      await this.redisService.setObject(user.id, client.id);
+    } catch (error) {
+      console.error('Error in handleConnection:', error);
     }
-
-    await this.redisService.setObject(user!.id, client.id);
   }
 
   async handleDisconnect(client: Socket) {
-    const user = await this.getUser(
-      client.handshake.headers.access_token as string,
-    );
+    try {
+      const user = await this.getUser(
+        client.handshake.headers.access_token as string,
+      );
 
-    await this.redisService.setObject(user!.id, new Date());
+      if (user) {
+        await this.redisService.setObject(user.id, new Date());
+      }
+    } catch (error) {
+      console.error('Error in handleDisconnect:', error);
+    }
   }
 
   @SubscribeMessage('message')
@@ -78,9 +87,48 @@ export class ChatGateway {
     if (isPresent(receiverClientId) && isNaN(Date.parse(receiverClientId))) {
       this.server.to(receiverClientId).emit('message', response);
     }
-
-    return response;
   }
+
+  // @SubscribeMessage('group-message')
+  // async handleGroupMessage(client: Socket, body: GroupMessageDto) {
+  //   const user = await this.getUser(
+  //     client.handshake.headers.access_token as string,
+  //   );
+
+  //   if (!user) {
+  //     client.disconnect();
+  //     return;
+  //   }
+
+  //   // Create the group message
+  //   const groupMessage = await this.chatService.createGroupMessage({
+  //     senderId: user.id,
+  //     groupId: body.groupId,
+  //     content: body.content,
+  //   });
+
+  //   // Get the group members
+  //   const groupMembers = await this.groupService.getGroupMembers(body.groupId);
+
+  //   const senderDetails = await this.userService.findOne({
+  //     id: groupMessage.senderId,
+  //   });
+
+  //   const response = {
+  //     ...groupMessage.dataValues,
+  //     senderUserDetails: senderDetails,
+  //   };
+
+  //   // Send the message to all group members
+  //   for (const member of groupMembers) {
+  //     const memberClientId = await this.redisService.getObject(member.userId);
+
+  //     if (isPresent(memberClientId) && isNaN(Date.parse(memberClientId))) {
+  //       this.server.to(memberClientId).emit('group-message', response);
+  //     }
+  //   }
+
+  // }
 
   @SubscribeMessage('typing')
   async handleTyping(client: Socket, body: { receiverId: string }) {
@@ -100,9 +148,41 @@ export class ChatGateway {
     }
   }
 
-  async getUser(accessToken: string) {
-    const { id } = await getUserFromAuthToken({ accessToken }, this.jwtService);
+  // @SubscribeMessage('group-typing')
+  // async handleGroupTyping(client: Socket, body: { groupId: string }) {
+  //   const user = await this.getUser(
+  //     client.handshake.headers.access_token as string,
+  //   );
 
-    return this.userService.findOne({ id });
+  //   if (!user) {
+  //     client.disconnect();
+  //     return;
+  //   }
+
+  //   const groupMembers = await this.groupService.getGroupMembers(body.groupId);
+
+  //   // Notify all group members of typing
+  //   for (const member of groupMembers) {
+  //     const memberClientId = await this.redisService.getObject(member.userId);
+
+  //     if (isPresent(memberClientId) && isNaN(Date.parse(memberClientId))) {
+  //       this.server
+  //         .to(memberClientId)
+  //         .emit('group-typing', { senderId: user.id });
+  //     }
+  //   }
+  // }
+
+  async getUser(accessToken: string) {
+    try {
+      const { id } = await getUserFromAuthToken(
+        { accessToken },
+        this.jwtService,
+      );
+
+      return this.userService.findOne({ id });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
