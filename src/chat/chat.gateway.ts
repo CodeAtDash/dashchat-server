@@ -128,12 +128,20 @@ export class ChatGateway {
       senderUserDetails: senderDetails,
     };
 
-    for (const member of groupMembers) {
-      const memberClientId = await this.redisService.getObject(member.userId);
+    const memberIds = groupMembers
+      .filter((member) => member.userId !== user.id)
+      .map((member) => member.userId);
 
-      if (isPresent(memberClientId) && isNaN(Date.parse(memberClientId))) {
-        this.server.to(memberClientId).emit('group-message', response);
-      }
+    if (memberIds.length > 0) {
+      const memberClientIds = await Promise.all(
+        memberIds.map((id) => this.redisService.getObject(id)),
+      );
+
+      memberClientIds.forEach((clientId) => {
+        if (isPresent(clientId) && isNaN(Date.parse(clientId))) {
+          this.server.to(clientId).emit('group-message', response);
+        }
+      });
     }
   }
 
@@ -170,15 +178,21 @@ export class ChatGateway {
       groupId: body.groupId,
     });
 
-    for (const member of groupMembers) {
-      const memberClientId = await this.redisService.getObject(member.userId);
+    const memberIds = groupMembers
+      .map((member) => member.userId)
+      .filter((memberId) => memberId !== user.id);
 
-      if (isPresent(memberClientId) && isNaN(Date.parse(memberClientId))) {
+    const memberClientIds = await Promise.all(
+      memberIds.map((id) => this.redisService.getObject(id)),
+    );
+
+    memberClientIds.forEach((clientId) => {
+      if (isPresent(clientId) && isNaN(Date.parse(clientId))) {
         this.server
-          .to(memberClientId)
-          .emit('group-typing', { senderId: user.id });
+          .to(clientId)
+          .emit('group-typing', { senderId: user.id, groupId: body.groupId });
       }
-    }
+    });
   }
 
   async getUser(accessToken: string) {
