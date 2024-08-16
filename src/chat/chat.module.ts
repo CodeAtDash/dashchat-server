@@ -11,6 +11,9 @@ import { Group } from './entities/group.entity';
 import { GroupMembers } from './entities/group-members.entity';
 import { GroupMessage } from './entities/group-message.entity';
 import { GroupChatService } from './services/group-chat.service';
+import { GroupService } from './services/group.service';
+import { GroupController } from './controller/group.controller';
+import { GroupChatsController } from './controller/group-chat.controller';
 
 @Module({
   imports: [
@@ -18,7 +21,13 @@ import { GroupChatService } from './services/group-chat.service';
     CommonModule,
     UsersModule,
   ],
-  providers: [ChatGateway, ChatService, GroupChatService, JwtService],
-  controllers: [ChatsController],
+  providers: [
+    ChatGateway,
+    ChatService,
+    GroupService,
+    GroupChatService,
+    JwtService,
+  ],
+  controllers: [ChatsController, GroupController, GroupChatsController],
 })
 export class ChatModule {}

@@ -12,7 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/services/users.service';
 import { GroupMessageDto } from './dto/group-message.dto';
 import { GroupChatService } from './services/group-chat.service';
-import { GroupMemberService } from './services/group-member.service';
+import { GroupService } from './services/group.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway {
@@ -23,7 +23,7 @@ export class ChatGateway {
     private readonly redisService: RedisService,
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
-    private readonly groupMemberService: GroupMemberService,
+    private readonly groupService: GroupService,
     private readonly groupChatService: GroupChatService,
   ) {}
 
@@ -102,7 +102,7 @@ export class ChatGateway {
       return;
     }
 
-    const isUserGroupMember = await this.groupMemberService.findOne({
+    const isUserGroupMember = await this.groupService.findOneGroupMember({
       groupId: body.groupId,
       userId: user.id,
     });
@@ -117,7 +117,7 @@ export class ChatGateway {
       content: body.content,
     });
 
-    const groupMembers = await this.groupMemberService.findAll({
+    const groupMembers = await this.groupService.findAllGroupMember({
       groupId: body.groupId,
     });
 
@@ -166,7 +166,7 @@ export class ChatGateway {
       return;
     }
 
-    const groupMembers = await this.groupMemberService.findAll({
+    const groupMembers = await this.groupService.findAllGroupMember({
       groupId: body.groupId,
     });
 
