@@ -23,10 +23,10 @@ export class ChatsController {
   @Get()
   async getAllAddedUser(
     @CurrentUser() currentUser: User,
-    @Query() query: PaginationFilters,
+    @Query() params: PaginationFilters,
   ) {
     try {
-      return await this.chatService.getAllAddedUser(currentUser.id, query);
+      return this.chatService.getAllAddedUser(currentUser.id, params);
     } catch (error) {
       throw new HttpException(
         'Failed to get users',
@@ -39,17 +39,17 @@ export class ChatsController {
   @Get(':userId')
   async findMessagesBetweenUsers(
     @CurrentUser() currentUser: User,
-    @Query() query: PaginationFilters,
+    @Query() params: PaginationFilters,
     @Param('userId') userId: string,
   ) {
     try {
-      const { offset, limit } = query;
+      const { offset, limit } = params;
 
       if (currentUser.id === userId) {
         throw new UserIdCannotBeSameAsCurrentUserId();
       }
 
-      return await this.chatService.findMessagesBetweenUsers(
+      return this.chatService.findMessagesBetweenUsers(
         currentUser.id,
         userId,
         offset,
@@ -70,11 +70,12 @@ export class ChatsController {
     @Param('id') id: string,
   ) {
     try {
-      return await this.chatService.update({
-        id,
-        receiverId: currentUser.id,
-        isRead: true,
-      });
+      return this.chatService.update(
+        {
+          isRead: true,
+        },
+        { id, receiverId: currentUser.id },
+      );
     } catch (error) {
       throw new HttpException(
         'Failed to mark message as read',
