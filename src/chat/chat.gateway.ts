@@ -4,15 +4,15 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { MessageDto } from './dto/message.dto';
-import { ChatService } from './chat.service';
+import { ChatService } from './services/chat.service';
 import { Socket } from 'socket.io';
 import { RedisService } from 'src/common/services/redis.services';
 import { getUserFromAuthToken, isPresent } from 'src/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/services/users.service';
 import { GroupMessageDto } from './dto/group-message.dto';
-import { GroupChatService } from './group-chat.service';
-import { GroupMemberService } from './group-member.service';
+import { GroupChatService } from './services/group-chat.service';
+import { GroupMemberService } from './services/group-member.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway {

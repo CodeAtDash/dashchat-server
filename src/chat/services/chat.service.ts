@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Message } from './entities/message.entity';
+import { Message } from '../entities/message.entity';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { PaginationFilters } from 'src/utils/types';

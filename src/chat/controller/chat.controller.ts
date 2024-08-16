@@ -8,7 +8,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ChatService } from './chat.service';
+import { ChatService } from '../services/chat.service';
 import { CurrentUser } from 'src/utils/decorators/current-user';
 import { User } from 'src/users/entities/user.entity';
 import { AuthGuard } from 'src/auth/auth.guard';

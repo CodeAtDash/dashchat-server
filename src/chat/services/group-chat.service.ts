@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { GroupMessage } from './entities/group-message.entity';
+import { GroupMessage } from '../entities/group-message.entity';
 
 @Injectable()
 export class GroupChatService {

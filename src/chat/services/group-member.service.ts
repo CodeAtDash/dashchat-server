@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { GroupMembers } from './entities/group-members.entity';
+import { GroupMembers } from '../entities/group-members.entity';
 import { Role } from 'src/utils/enums';
 
 @Injectable()
