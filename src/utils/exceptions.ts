@@ -134,3 +134,13 @@ export class UserIdCannotBeSameAsCurrentUserId extends CustomException {
     );
   }
 }
+
+export class CurrentUserIsNotMember extends CustomException {
+  constructor() {
+    super(
+      'Current user is not a member of this group',
+      'CurrentUserIsNotMember',
+      HttpStatus.CONFLICT,
+    );
+  }
+}
