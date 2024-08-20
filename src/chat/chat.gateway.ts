@@ -4,16 +4,15 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { MessageDto } from './dto/message.dto';
-import { ChatService } from './chat.service';
+import { ChatService } from './services/chat.service';
 import { Socket } from 'socket.io';
 import { RedisService } from 'src/common/services/redis.services';
-import {
-  getUserFromAuthToken,
-  isNilOrEmpty,
-  isPresent,
-} from 'src/utils/helpers';
+import { getUserFromAuthToken, isPresent } from 'src/utils/helpers';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/services/users.service';
+import { GroupMessageDto } from './dto/group-message.dto';
+import { GroupChatService } from './services/group-chat.service';
+import { GroupService } from './services/group.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway {
@@ -24,27 +23,39 @@ export class ChatGateway {
     private readonly redisService: RedisService,
     private readonly jwtService: JwtService,
     private readonly userService: UsersService,
+    private readonly groupService: GroupService,
+    private readonly groupChatService: GroupChatService,
   ) {}
 
   async handleConnection(client: Socket) {
-    const user = await this.getUser(
-      client.handshake.headers.access_token as string,
-    );
+    try {
+      const user = await this.getUser(
+        client.handshake.headers.access_token as string,
+      );
 
-    if (isNilOrEmpty(user)) {
-      client.disconnect();
-      return;
+      if (!user) {
+        client.disconnect();
+        return;
+      }
+
+      await this.redisService.setObject(user.id, client.id);
+    } catch (error) {
+      console.error('Error in handleConnection:', error);
     }
-
-    await this.redisService.setObject(user!.id, client.id);
   }
 
   async handleDisconnect(client: Socket) {
-    const user = await this.getUser(
-      client.handshake.headers.access_token as string,
-    );
+    try {
+      const user = await this.getUser(
+        client.handshake.headers.access_token as string,
+      );
 
-    await this.redisService.setObject(user!.id, new Date());
+      if (user) {
+        await this.redisService.setObject(user.id, new Date());
+      }
+    } catch (error) {
+      console.error('Error in handleDisconnect:', error);
+    }
   }
 
   @SubscribeMessage('message')
@@ -78,8 +89,60 @@ export class ChatGateway {
     if (isPresent(receiverClientId) && isNaN(Date.parse(receiverClientId))) {
       this.server.to(receiverClientId).emit('message', response);
     }
+  }
 
-    return response;
+  @SubscribeMessage('group-message')
+  async handleGroupMessage(client: Socket, body: GroupMessageDto) {
+    const user = await this.getUser(
+      client.handshake.headers.access_token as string,
+    );
+
+    if (!user) {
+      client.disconnect();
+      return;
+    }
+
+    const isUserGroupMember = await this.groupService.findOneGroupMember({
+      groupId: body.groupId,
+      userId: user.id,
+    });
+
+    if (!isUserGroupMember) {
+      return;
+    }
+
+    const groupMessage = await this.groupChatService.create({
+      groupId: body.groupId,
+      senderId: user.id,
+      content: body.content,
+    });
+
+    const groupMembers = await this.groupService.findAllGroupMember({
+      groupId: body.groupId,
+    });
+
+    const senderDetails = user;
+
+    const response = {
+      ...groupMessage.dataValues,
+      senderUserDetails: senderDetails,
+    };
+
+    const memberIds = groupMembers
+      .filter((member) => member.userId !== user.id)
+      .map((member) => member.userId);
+
+    if (memberIds.length > 0) {
+      const memberClientIds = await Promise.all(
+        memberIds.map((id) => this.redisService.getObject(id)),
+      );
+
+      memberClientIds.forEach((clientId) => {
+        if (isPresent(clientId) && isNaN(Date.parse(clientId))) {
+          this.server.to(clientId).emit('group-message', response);
+        }
+      });
+    }
   }
 
   @SubscribeMessage('typing')
@@ -100,9 +163,48 @@ export class ChatGateway {
     }
   }
 
-  async getUser(accessToken: string) {
-    const { id } = await getUserFromAuthToken({ accessToken }, this.jwtService);
+  @SubscribeMessage('group-typing')
+  async handleGroupTyping(client: Socket, body: { groupId: string }) {
+    const user = await this.getUser(
+      client.handshake.headers.access_token as string,
+    );
 
-    return this.userService.findOne({ id });
+    if (!user) {
+      client.disconnect();
+      return;
+    }
+
+    const groupMembers = await this.groupService.findAllGroupMember({
+      groupId: body.groupId,
+    });
+
+    const memberIds = groupMembers
+      .map((member) => member.userId)
+      .filter((memberId) => memberId !== user.id);
+
+    const memberClientIds = await Promise.all(
+      memberIds.map((id) => this.redisService.getObject(id)),
+    );
+
+    memberClientIds.forEach((clientId) => {
+      if (isPresent(clientId) && isNaN(Date.parse(clientId))) {
+        this.server
+          .to(clientId)
+          .emit('group-typing', { senderId: user.id, groupId: body.groupId });
+      }
+    });
+  }
+
+  async getUser(accessToken: string) {
+    try {
+      const { id } = await getUserFromAuthToken(
+        { accessToken },
+        this.jwtService,
+      );
+
+      return this.userService.findOne({ id });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Message } from './entities/message.entity';
+import { Message } from '../entities/message.entity';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { PaginationFilters } from 'src/utils/types';
@@ -22,13 +22,13 @@ export class ChatService {
     return this.messageModel.create(payload);
   }
 
-  async update(payload: { id: string; receiverId: string; isRead: boolean }) {
-    return this.messageModel.update(
-      { isRead: payload.isRead },
-      {
-        where: { id: payload.id, receiverId: payload.receiverId },
-      },
-    );
+  async update(
+    payload: { isRead: boolean },
+    condition: { id: string; receiverId: string },
+  ) {
+    return this.messageModel.update(payload, {
+      where: condition,
+    });
   }
 
   async findMessagesBetweenUsers(
@@ -62,8 +62,8 @@ export class ChatService {
     };
   }
 
-  async getAllAddedUser(currentUserId: string, query: PaginationFilters) {
-    const { offset = 0, limit = 10, search = '' } = query;
+  async getAllAddedUser(currentUserId: string, params: PaginationFilters) {
+    const { offset = 0, limit = 10, search = '' } = params;
 
     // Query to get total count
     const totalQuery = `
